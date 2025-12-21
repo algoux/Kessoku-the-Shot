@@ -1,42 +1,33 @@
-# Kessoku-the-Shot
+# Kessoku the Shot 📱
+> 专注于**算法竞赛直播**的移动机位推流 app
 
-This template should help get you started developing with Vue 3 in Vite.
+## 🛠️ 技术栈
+- vue 3.2
+- vue-class-component
+- capacitor
+- typescript
+- element-plus
 
-## Recommended IDE Setup
+## 📦️ 环境准备
+- nodeJS >= 22
+- pnpm >= 8
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## 🚀 快速开始
 
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd) 
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
-pnpm install
+### 依赖安装
+```bash
+pnpm i
 ```
 
-### Compile and Hot-Reload for Development
+### 启动开发
+在虚拟机中安装软件（以 IOS 模拟器为例）
+```bash
+npx cap run ios
+```
 
-```sh
+随后启动 vite 服务器
+```bash
 pnpm dev
 ```
 
-### Type-Check, Compile and Minify for Production
-
-```sh
-pnpm build
-```
+随后在模拟器中打开软件即可启动开发
