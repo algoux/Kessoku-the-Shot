@@ -1,4 +1,9 @@
-<img src="./resources/icon.png" style="width: 48px" />
+<div style="width: 100%; height: 60px;  display: flex; justify-content: center; align-items: center; gap: 10px">
+    <img src="./resources/icon.png" style="height: 48px" />
+    <img src="./public/Vue@128.png" style="height: 48px" />
+    <img src="./public/capacitor@128.png" style="height: 48px" />
+    <img src="./public/typescript@128.png" style="height: 48px" />
+</div>
 
 # Kessoku the Shot 
 > 专注于**算法竞赛直播**的移动机位推流 app
