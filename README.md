@@ -21,7 +21,7 @@
 
 ### 依赖安装
 ```bash
-pnpm i
+pnpm run init
 ```
 
 ### 启动开发
@@ -31,7 +31,7 @@ pnpm i
 
 启动 vite 服务器
 ```bash
-pnpm dev
+pnpm dev:web
 ```
 
 浏览器访问 <http://localhost:5173>，并打开 Dev Tools 预览移动端设备。
@@ -41,16 +41,9 @@ pnpm dev
 确保你安装好了 Xcode 以及 Android Studio 开发移动端所需的依赖。
 
 ```bash
-# Step One
-pnpm build
-
-# Step Two
-pnpm sync
-
-# Step Three
-## android 
+# android 
 pnpm start:android
 
-## ios
+# ios
 pnpm start:ios
 ```

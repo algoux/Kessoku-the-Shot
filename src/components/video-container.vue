@@ -38,7 +38,6 @@ export default class VideoContainer extends Vue {
   selectedCamera: string = '';
   loadCameraSuccess: boolean = false;
 
-  // 可选分辨率高度
   availableHeights = [2160, 1800, 1440, 1200, 1080, 900, 768, 720];
 
   settings: VideoSettings = {
@@ -401,7 +400,9 @@ export default class VideoContainer extends Vue {
   width: 100%;
   display: flex;
   justify-content: center;
+  align-items: center;
   position: relative;
+  overflow: hidden;
 
   & video {
     width: 100%;
@@ -428,18 +429,14 @@ export default class VideoContainer extends Vue {
 
     .info-label {
       color: rgba(255, 255, 255, 0.7);
-      font-weight: 500;
     }
 
     .info-value {
       color: #fff;
-      font-weight: 600;
-      font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
     }
   }
 }
 
-// 横屏时在video内部
 .device-info-landscape {
   position: absolute;
   bottom: 10px;
@@ -453,9 +450,7 @@ export default class VideoContainer extends Vue {
   }
 }
 
-// 竖屏时在video外部
 .device-info-portrait {
-  margin-top: 12px;
   width: 95%;
   background: none;
   backdrop-filter: none;
@@ -480,10 +475,7 @@ export default class VideoContainer extends Vue {
 
 .portrait {
   aspect-ratio: 16 / 9;
-
-  & video {
-    width: 95%;
-  }
+  padding: .5rem;
 }
 
 .landscape {

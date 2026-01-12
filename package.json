@@ -7,15 +7,15 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
-    "dev": "vite",
+    "init": "pnpm i --lockfile && npx cap add ios && npx cap add android && node scripts/add-permissions.js && npx cap sync",
+    "dev:web": "vite",
     "dev:ios": "npx cap run ios",
     "dev:android": "npx cap run android",
     "start:ios": "NODE_ENV=production pnpm build && npx cap sync ios && npx cap run ios",
     "start:android": "NODE_ENV=production pnpm build && npx cap sync android && npx cap run android",
     "sync": "npx cap sync",
     "build": "vite build",
-    "preview": "vite preview",
-    "type-check": "vue-tsc --build"
+    "icon": "npx @capacitor/assets generate"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",
@@ -40,6 +40,7 @@
     "@types/node": "^24.10.1",
     "@vitejs/plugin-vue": "^6.0.2",
     "@vue/tsconfig": "^0.8.1",
+    "fs": "0.0.1-security",
     "less": "^4.2.2",
     "npm-run-all2": "^8.0.4",
     "prettier": "^3.6.2",
