@@ -5,6 +5,8 @@ import logo from '@/assets/favicon.png';
 import { User, KeyRound, Eye, EyeOff } from 'lucide-vue-next';
 import { Preferences } from '@capacitor/preferences';
 import { LoginState } from '@/typings/data';
+import { ScreenOrientationState } from '@/typings/data';
+import { Inject } from 'vue-property-decorator';
 
 @Options({
   components: {
@@ -23,10 +25,14 @@ import { LoginState } from '@/typings/data';
 export default class LoginView extends Vue {
   logoUrl = logo;
   passwordVisible = false;
+  loading: boolean = false;
   loginState: LoginState = {
     userId: '',
     token: '',
   };
+
+  @Inject()
+  screenOrientation!: ScreenOrientationState;
 
   get passwordType(): string {
     return this.passwordVisible ? 'text' : 'password';
@@ -37,17 +43,26 @@ export default class LoginView extends Vue {
   }
 
   async login() {
-    await Preferences.set({
-      key: 'loginState',
-      value: JSON.stringify(this.loginState),
-    });
-    this.$router.push('/');
+    try {
+      this.loading = true;
+      await Preferences.set({
+        key: 'loginState',
+        value: JSON.stringify(this.loginState),
+      });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      this.$router.push('/');
+    } catch (error) {
+      console.error('Login failed:', error);
+      alert(`登录失败: ${error}`);
+    } finally {
+      this.loading = false;
+    }
   }
 }
 </script>
 
 <template>
-  <div class="login-container">
+  <div class="login-container" :class="screenOrientation.isPortrait ? 'shu' : 'heng'">
     <Image :src="logoUrl" width="100" height="100" fit="contain" />
     <h1 class="login-title">Login to Kessoku the Shot</h1>
     <Form class="login-form" @submit="login">
@@ -105,10 +120,12 @@ export default class LoginView extends Vue {
         native-type="submit"
         :disabled="!canLogin"
         style="margin-top: 1rem"
+        :loading="loading"
+        loading-text="Logging in..."
         >Login</Button
       >
     </Form>
-    <p class="copyright">© 2026 algoUX. All rights reserved.</p>
+    <p class="copyright" v-if="screenOrientation.isPortrait">© 2026 algoUX. All rights reserved.</p>
   </div>
 </template>
 
@@ -120,7 +137,6 @@ export default class LoginView extends Vue {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 1.5rem;
   overflow: hidden;
   position: relative;
 
@@ -131,9 +147,22 @@ export default class LoginView extends Vue {
 
   & .copyright {
     position: absolute;
-    bottom: 2rem;
     font-size: 0.6rem;
     color: #888;
+  }
+}
+
+.shu {
+  gap: 1.5rem;
+  & .copyright {
+    bottom: 1rem;
+  }
+}
+
+.heng {
+  gap: 1rem;
+  & .copyright {
+    bottom: .5rem;
   }
 }
 
@@ -148,8 +177,8 @@ export default class LoginView extends Vue {
 }
 
 .login-form {
-  width: 70vw;
-  max-width: 25rem;
+  width: 72vw;
+  max-width: 20rem;
 }
 
 .text-input {

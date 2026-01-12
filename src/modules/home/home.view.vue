@@ -2,9 +2,9 @@
 import { Vue, Options } from 'vue-class-component';
 import { Preferences } from '@capacitor/preferences';
 import { HomePageIndexEnum, HomeState } from '@/typings/data';
-import { Provide } from 'vue-property-decorator';
+import { Inject, Provide } from 'vue-property-decorator';
+import { ScreenOrientationState } from '@/typings/data';
 
-// import { Button, Collapse, CollapseItem, Tabbar, TabbarItem, Navbar } from '@nutui/nutui';
 import { Button, Tabbar, TabbarItem, Popup } from 'vant';
 import { User, Home, Settings } from 'lucide-vue-next';
 import VideoContainer from '@/components/video-container.vue';
@@ -26,12 +26,15 @@ import HomeNavBar from '@/components/home-nav-bar.vue';
   },
 })
 export default class HomeView extends Vue {
-    show: boolean = false
+  show: boolean = false;
   @Provide()
   homeState: HomeState = {
     userId: '',
   };
   currentPageIndex: HomePageIndexEnum = HomePageIndexEnum.HOME;
+
+  @Inject()
+  screenOrientation!: ScreenOrientationState;
 
   async mounted() {
     const { userId, token } = await Preferences.get({ key: 'loginState' }).then((res) =>
@@ -49,6 +52,23 @@ export default class HomeView extends Vue {
     this.$router.push('/login');
   }
 
+  @Provide()
+  openDeviceSettings() {
+    this.show = true;
+  }
+
+  @Provide()
+  async applyVideoSettings(settings: any) {
+    const videoContainer = this.$refs.videoContainer as any;
+    if (videoContainer) {
+      // 更新 video-container 的设置
+      videoContainer.settings = settings;
+      await videoContainer.applySettings();
+    }
+    // 关闭设置面板
+    this.show = false;
+  }
+
   showPopup() {
     this.show = true;
   }
@@ -57,18 +77,17 @@ export default class HomeView extends Vue {
 
 <template>
   <div class="home-view">
-    <Popup v-model:show="show"  position="bottom" >
-        <template #default>
-            <GlobalSettings />
-        </template>
+    <Popup v-model:show="show" position="bottom">
+      <template #default>
+        <GlobalSettings @close="show = false" />
+      </template>
     </Popup>
     <HomeNavBar />
     <div class="home-content">
-      <VideoContainer v-if="this.currentPageIndex === 0" />
-      <!-- <GlobalSettings v-else-if="this.currentPageIndex === 1" /> -->
+      <VideoContainer ref="videoContainer" v-if="this.currentPageIndex === 0" />
     </div>
-    <footer class="home-footer">
-      <Tabbar unactive-color="#7d7e80" active-color="#1989fa" >
+    <footer class="home-footer" v-if="screenOrientation.isPortrait">
+      <Tabbar unactive-color="#7d7e80" active-color="#1989fa">
         <TabbarItem label="Home">
           <template #icon="props">
             <Home :stroke-width="1" />
@@ -102,7 +121,6 @@ export default class HomeView extends Vue {
   .home-footer {
     width: 100%;
     flex-shrink: 0;
-    background-color: red;
   }
 }
 </style>

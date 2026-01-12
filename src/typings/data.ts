@@ -11,3 +11,8 @@ export interface LoginState {
 export interface HomeState {
     userId: string;
 }
+
+export interface ScreenOrientationState {
+    isPortrait: boolean;
+    isLandscape: boolean;
+}
