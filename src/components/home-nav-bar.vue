@@ -98,21 +98,24 @@ export default class HomeNavBar extends Vue {
 </template>
 
 <style scoped lang="less">
+
 .home-header {
+  :deep(.van-nav-bar__title) {
+    width: 100%;
+    max-width: 100%;
+  }
+
   & .home-header-content {
-    width: 100vw;
-    height: 6rem;
+    width: 100%;
     font-size: 1.5rem;
     font-weight: bold;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: absolute;
-    left: 0;
-    padding: 0 2rem;
-    // background-color: rgba(255, 255, 255, 0.8);
+    padding: 0rem 2rem;
     border: none;
     outline: none;
+    box-sizing: border-box;
 
     & .userinfo {
       display: flex;

@@ -11,12 +11,23 @@
   color-scheme: light dark;
 }
 
+html,
+body,
+#app {
+  height: 100%;
+}
+
 body {
   font-family: 'Noto Sans JP', sans-serif;
   width: 100vw;
   overflow: hidden;
 }
-
+.van-nav-bar {
+  background: transparent !important;
+  &::after {
+    border: none !important;
+  }
+}
 a {
   color: inherit;
   text-decoration: none;

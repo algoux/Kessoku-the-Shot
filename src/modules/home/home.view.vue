@@ -65,8 +65,6 @@ export default class HomeView extends Vue {
       videoContainer.settings = settings;
       await videoContainer.applySettings();
     }
-    // 关闭设置面板
-    this.show = false;
   }
 
   showPopup() {
@@ -109,6 +107,8 @@ export default class HomeView extends Vue {
   height: 100dvh;
   display: flex;
   flex-direction: column;
+  padding-top: 2rem;
+
 
   .home-content {
     flex: 1;
