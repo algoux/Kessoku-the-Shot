@@ -7,6 +7,7 @@ import { Preferences } from '@capacitor/preferences';
 import { LoginState } from '@/typings/data';
 import { ScreenOrientationState } from '@/typings/data';
 import { Inject } from 'vue-property-decorator';
+import SocketManager from '@/service/socket-manager';
 
 @Options({
   components: {
@@ -28,8 +29,11 @@ export default class LoginView extends Vue {
   loading: boolean = false;
   loginState: LoginState = {
     userId: '',
-    token: '',
+    broadcasterToken: '',
+    alias: '',
   };
+
+  socketManager: SocketManager | null = null;
 
   @Inject()
   screenOrientation!: ScreenOrientationState;
@@ -39,17 +43,34 @@ export default class LoginView extends Vue {
   }
 
   get canLogin(): boolean {
-    return this.loginState.userId !== '' && this.loginState.token !== '';
+    return (
+      this.loginState.alias !== '' &&
+      this.loginState.broadcasterToken !== '' &&
+      this.loginState.userId !== ''
+    );
+  }
+
+  handleConnectError(error: Error) {
+    console.error('Socket connection error:', error);
+    alert(`连接错误: ${error.message}`);
+    this.loading = false;
+    SocketManager.reset();
   }
 
   async login() {
     try {
       this.loading = true;
+      this.socketManager = SocketManager.getInstance(
+        this.loginState.alias,
+        this.loginState.userId,
+        this.loginState.broadcasterToken,
+        this.handleConnectError.bind(this),
+      );
+      const contestInfo = await this.socketManager.getContestInfo();
       await Preferences.set({
         key: 'loginState',
-        value: JSON.stringify(this.loginState),
+        value: JSON.stringify(contestInfo),
       });
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       this.$router.push('/');
     } catch (error) {
       console.error('Login failed:', error);
@@ -68,6 +89,22 @@ export default class LoginView extends Vue {
     <Form class="login-form" @submit="login">
       <CellGroup inset>
         <Field
+          v-model="loginState.alias"
+          label="Alias"
+          placeholder="Enter your Alias"
+          clearable
+          class="text-input"
+          label-align="center"
+          size="large"
+          label-width="50"
+        >
+          <template #left-icon>
+            <Icon>
+              <User :stroke-width="1" size="18" />
+            </Icon>
+          </template>
+        </Field>
+        <Field
           v-model="loginState.userId"
           label="userId"
           placeholder="Enter your User ID"
@@ -84,7 +121,7 @@ export default class LoginView extends Vue {
           </template>
         </Field>
         <Field
-          v-model="loginState.token"
+          v-model="loginState.broadcasterToken"
           :type="passwordType"
           label="token"
           placeholder="Enter your Token"
@@ -162,7 +199,7 @@ export default class LoginView extends Vue {
 .heng {
   gap: 1rem;
   & .copyright {
-    bottom: .5rem;
+    bottom: 0.5rem;
   }
 }
 

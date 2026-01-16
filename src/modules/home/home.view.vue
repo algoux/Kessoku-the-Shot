@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
 import { Preferences } from '@capacitor/preferences';
-import { HomePageIndexEnum, HomeState } from '@/typings/data';
+import { HomePageIndexEnum, HomeState, GetContestInfoResDTO } from '@/typings/data';
 import { Inject, Provide } from 'vue-property-decorator';
 import { ScreenOrientationState } from '@/typings/data';
 
@@ -29,7 +29,7 @@ export default class HomeView extends Vue {
   show: boolean = false;
   @Provide()
   homeState: HomeState = {
-    userId: '',
+    userName: '',
   };
   currentPageIndex: HomePageIndexEnum = HomePageIndexEnum.HOME;
 
@@ -37,13 +37,16 @@ export default class HomeView extends Vue {
   screenOrientation!: ScreenOrientationState;
 
   async mounted() {
-    const { userId, token } = await Preferences.get({ key: 'loginState' }).then((res) =>
+    const localState = await Preferences.get({ key: 'loginState' }).then((res) =>
       JSON.parse(res.value || '{}'),
     );
-    if (!userId && !token) this.$router.push('/login');
-    else {
-      this.homeState.userId = userId;
+    if (!localState || !localState.data) {
+      this.$router.push('/login');
+      return;
     }
+    console.log('Loaded local login state:', localState.data);
+    console.log('User name:', localState.data.user.name);
+    this.homeState.userName = localState.data.user.name || 'Unknown User';
   }
 
   @Provide()
@@ -108,7 +111,6 @@ export default class HomeView extends Vue {
   display: flex;
   flex-direction: column;
   padding-top: 2rem;
-
 
   .home-content {
     flex: 1;

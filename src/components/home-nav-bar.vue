@@ -71,7 +71,7 @@ export default class HomeNavBar extends Vue {
                 fit="cover"
                 round
               />
-              <span>{{ this.homeState.userId }}</span>
+              <span>{{ this.homeState.userName }}</span>
               <ChevronDown
                 :size="20"
                 :class="{ 'icon-rotate': showMenu }"
@@ -83,7 +83,7 @@ export default class HomeNavBar extends Vue {
 
         <div v-else class="userinfo">
           <Image :src="logo" alt="Logo" width="34" style="margin-right: 0.5rem" fit="cover" round />
-          <span>{{ this.homeState.userId }}</span>
+          <span>{{ this.homeState.userName }}</span>
         </div>
 
         <Button type="primary" round>
