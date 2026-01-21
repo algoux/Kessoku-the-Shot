@@ -6,25 +6,17 @@ export default class SocketManager {
   private socket: Socket;
   private onConnectErrorCallback?: (error: Error) => void;
 
-  private constructor(
-    alias: string,
-    userId: string,
-    broadcasterToken: string,
-    onConnectError?: (error: Error) => void,
-  ) {
+  private constructor(alias: string, shotToken: string, onConnectError?: (error: Error) => void) {
     this.onConnectErrorCallback = onConnectError;
-    console.log({
-        alias,
-        userId,
-        broadcasterToken,
-    })
-    this.socket = io('https://rl-broadcast-hub.algoux.cn/broadcaster', {
+    
+    this.socket = io('https://rl-broadcast-hub.algoux.cn/shot', {
       transports: ['websocket'],
       path: undefined,
+      extraHeaders: {
+        'X-UCA': alias,
+      },
       auth: {
-        alias,
-        userId,
-        broadcasterToken,
+        token: shotToken,
       },
       reconnection: true,
       reconnectionAttempts: Infinity,
@@ -44,12 +36,11 @@ export default class SocketManager {
 
   public static getInstance(
     alias: string,
-    userId: string,
-    broadcasterToken: string,
+    shotToken: string,
     onConnectError?: (error: Error) => void,
   ) {
     if (!SocketManager.instance) {
-      SocketManager.instance = new SocketManager(alias, userId, broadcasterToken, onConnectError);
+      SocketManager.instance = new SocketManager(alias, shotToken, onConnectError);
     }
     return SocketManager.instance;
   }

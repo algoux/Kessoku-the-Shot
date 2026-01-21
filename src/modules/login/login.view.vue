@@ -28,8 +28,7 @@ export default class LoginView extends Vue {
   passwordVisible = false;
   loading: boolean = false;
   loginState: LoginState = {
-    userId: '',
-    broadcasterToken: '',
+    shotToken: '',
     alias: '',
   };
 
@@ -43,11 +42,7 @@ export default class LoginView extends Vue {
   }
 
   get canLogin(): boolean {
-    return (
-      this.loginState.alias !== '' &&
-      this.loginState.broadcasterToken !== '' &&
-      this.loginState.userId !== ''
-    );
+    return this.loginState.alias !== '' && this.loginState.shotToken !== '';
   }
 
   handleConnectError(error: Error) {
@@ -62,8 +57,7 @@ export default class LoginView extends Vue {
       this.loading = true;
       this.socketManager = SocketManager.getInstance(
         this.loginState.alias,
-        this.loginState.userId,
-        this.loginState.broadcasterToken,
+        this.loginState.shotToken,
         this.handleConnectError.bind(this),
       );
       const contestInfo = await this.socketManager.getContestInfo();
@@ -90,8 +84,8 @@ export default class LoginView extends Vue {
       <CellGroup inset>
         <Field
           v-model="loginState.alias"
-          label="Alias"
-          placeholder="Enter your Alias"
+          label="alias"
+          placeholder="Enter contest alias"
           clearable
           class="text-input"
           label-align="center"
@@ -105,23 +99,7 @@ export default class LoginView extends Vue {
           </template>
         </Field>
         <Field
-          v-model="loginState.userId"
-          label="userId"
-          placeholder="Enter your User ID"
-          clearable
-          class="text-input"
-          label-align="center"
-          size="large"
-          label-width="50"
-        >
-          <template #left-icon>
-            <Icon>
-              <User :stroke-width="1" size="18" />
-            </Icon>
-          </template>
-        </Field>
-        <Field
-          v-model="loginState.broadcasterToken"
+          v-model="loginState.shotToken"
           :type="passwordType"
           label="token"
           placeholder="Enter your Token"

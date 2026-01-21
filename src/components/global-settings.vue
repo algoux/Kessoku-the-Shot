@@ -2,17 +2,10 @@
 import { Vue, Options } from 'vue-class-component';
 import { Inject, Ref } from 'vue-property-decorator';
 import { ScreenOrientationState } from '@/typings/data';
+import { Resolution } from '@/typings/data';
 
 import { Form, CellGroup, Field, Button, DropdownItem, DropdownMenu, Icon } from 'vant';
-import { X } from 'lucide-vue-next';
-
-interface CameraDevice {
-  deviceId: string;
-  label: string;
-  maxWidth: number;
-  maxHeight: number;
-  maxFrameRate: number;
-}
+import { HeartIcon, X } from 'lucide-vue-next';
 
 @Options({
   components: {
@@ -27,216 +20,58 @@ interface CameraDevice {
   },
 })
 export default class GlobalSettings extends Vue {
+  protected PRE_SET_FRAME_RATE_LIST: number[] = [60, 30, 24, 15];
   @Inject()
   logout!: () => Promise<void>;
-
-  @Inject()
-  applyVideoSettings!: (settings: any) => Promise<void>;
-
   @Inject()
   screenOrientation!: ScreenOrientationState;
-
-  // 摄像头设备列表
-  cameras: CameraDevice[] = [];
-  selectedCameraId = '';
-
-  // 可选分辨率高度
-  availableHeights = [2160, 1800, 1440, 1200, 1080, 900, 768, 720];
-
-  // 当前设置
-  selectedHeight = 1080;
-  selectedFrameRate = 30;
-  calculatedBitrate = 0;
-
-  optionsFrameRate = [
-    { text: '30 FPS', value: 30 },
-    { text: '60 FPS', value: 60 },
-  ];
-
-  get optionsResolution() {
-    return this.availableHeights.map((height) => ({
-      text: `${Math.round((height * 16) / 9)}x${height} (${height}p)`,
-      value: height,
-    }));
-  }
+  @Inject()
+  availableCameras!: MediaDeviceInfo[];
+  @Inject()
+  currentDevice!: MediaDeviceInfo | null;
+  @Inject()
+  settings!: MediaTrackSettings | null;
+  @Inject()
+  capabilities!: MediaTrackCapabilities | null;
+  @Inject()
+  resolutionList!: Resolution[];
+  @Inject()
+  switchCamera!: (deviceId: string) => Promise<void>;
+  @Inject()
+  onResolutionChange!: (width: number, height: number) => Promise<void>;
+  @Inject()
+  onFrameRateChange!: (frameRate: number) => Promise<void>;
 
   get optionsCamera() {
-    return this.cameras.map((camera) => ({
-      text: `${camera.label}`,
-      value: camera.deviceId,
+    return this.availableCameras.map((device) => ({
+      text: device.label,
+      value: device.deviceId,
     }));
   }
 
-  // 获取当前摄像头
-  get currentCamera(): CameraDevice | undefined {
-    return this.cameras.find((c) => c.deviceId === this.selectedCameraId);
-  }
-
-  // 获取可用的分辨率选项（根据当前摄像头能力禁用）
-  get optionsResolutionFiltered() {
-    const maxHeight = this.currentCamera?.maxHeight || 1080;
-    return this.optionsResolution.map((option) => ({
-      ...option,
-      disabled: option.value > maxHeight,
-      text: option.value > maxHeight ? `${option.text} (不支持)` : option.text,
-    }));
-  }
-
-  // 获取可用的帧率选项
-  get optionsFrameRateFiltered() {
-    const maxFrameRate = this.currentCamera?.maxFrameRate || 30;
-    return this.optionsFrameRate.map((option) => ({
-      ...option,
-      disabled: option.value > maxFrameRate,
-      text: option.value > maxFrameRate ? `${option.text} (不支持)` : option.text,
-    }));
-  }
-
-  // 计算码率
-  calculateBitrate(width: number, height: number, frameRate: number): number {
-    return Math.round(width * height * frameRate * 0.000078125);
-  }
-
-  // 获取摄像头设备能力
-  async getCameraCapabilities(): Promise<void> {
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
-      const videoDevices = devices.filter((device) => device.kind === 'videoinput');
-
-      this.cameras = [];
-
-      for (const device of videoDevices) {
-        // 请求最高能力，获取实际支持的参数
-        const testStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            deviceId: { exact: device.deviceId },
-            width: { ideal: 3840 },
-            height: { ideal: 2160 },
-            frameRate: { ideal: 60 },
-          },
-        });
-
-        const track = testStream.getVideoTracks()[0];
-        const actualSettings = track.getSettings();
-
-        this.cameras.push({
-          deviceId: device.deviceId,
-          label: device.label || `摄像头 ${this.cameras.length + 1}`,
-          maxWidth: actualSettings.width || 1920,
-          maxHeight: actualSettings.height || 1080,
-          maxFrameRate: actualSettings.frameRate || 30,
-        });
-
-        track.stop();
-      }
-
-      // 选择能力最高的摄像头
-      if (this.cameras.length > 0) {
-        const bestCamera = this.cameras.reduce((prev, current) => {
-          const prevPixels = prev.maxWidth * prev.maxHeight;
-          const currentPixels = current.maxWidth * current.maxHeight;
-          return currentPixels > prevPixels ? current : prev;
-        });
-
-        this.selectedCameraId = bestCamera.deviceId;
-        this.selectedHeight = bestCamera.maxHeight;
-        this.selectedFrameRate = Math.min(60, bestCamera.maxFrameRate) as 30 | 60;
-
-        this.updateBitrate();
-      }
-    } catch (error) {
-      console.error('获取摄像头能力失败:', error);
-      throw error;
-    }
-  }
-
-  // 更新码率
-  updateBitrate(): void {
-    const width = Math.round((this.selectedHeight * 16) / 9);
-    this.calculatedBitrate = this.calculateBitrate(
-      width,
-      this.selectedHeight,
-      this.selectedFrameRate,
+  get optionsResolution() {
+    const filterResolutions = this.resolutionList.filter(
+      (r) => r.height <= this.capabilities.height.max,
     );
+    console.log('Filtered Resolutions:', filterResolutions);
+    return filterResolutions.map((res) => ({
+      text: `${res.width} x ${res.height}`,
+      value: res.height,
+    }));
   }
 
-  // 应用设置
-  async applySettings(): Promise<void> {
-    const camera = this.cameras.find((c) => c.deviceId === this.selectedCameraId);
-    if (!camera) return;
-
-    const width = Math.round((this.selectedHeight * 16) / 9);
-    const settings = {
-      deviceId: this.selectedCameraId,
-      deviceLabel: camera.label,
-      width,
-      height: this.selectedHeight,
-      frameRate: this.selectedFrameRate,
-      bitrate: this.calculatedBitrate,
-    };
-
-    await this.applyVideoSettings(settings);
+  get optionsFramerate() {
+    const filterFrameRates = this.PRE_SET_FRAME_RATE_LIST.filter(
+      (rate) => rate <= this.capabilities.frameRate.max,
+    );
+    return filterFrameRates.map((rate) => ({
+      text: `${rate} fps`,
+      value: rate,
+    }));
   }
 
-  // 监听分辨率变化
-  onResolutionChange(): void {
-    const maxHeight = this.currentCamera?.maxHeight;
-    if (this.selectedHeight > maxHeight) {
-      alert(`该摄像头不支持 ${this.selectedHeight}p 分辨率，最大支持 ${maxHeight}p`);
-      this.selectedHeight = maxHeight;
-    }
-    this.updateBitrate();
-    this.applySettings()
-  }
-
-  // 监听帧率变化
-  onFrameRateChange(): void {
-    const maxFrameRate = this.currentCamera?.maxFrameRate;
-    if (this.selectedFrameRate > maxFrameRate) {
-      alert(`该摄像头不支持 ${this.selectedFrameRate}fps，最大支持 ${maxFrameRate}fps`);
-      this.selectedFrameRate = 30;
-    }
-    this.updateBitrate();
-    this.applySettings();
-  }
-
-  // 监听摄像头变化
-  async onCameraChange(): Promise<void> {
-    const camera = this.cameras.find((c) => c.deviceId === this.selectedCameraId);
-    if (!camera) return;
-
-    // 重新测试摄像头能力
-    try {
-      const testStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          deviceId: { exact: this.selectedCameraId },
-          width: { ideal: 3840 },
-          height: { ideal: 2160 },
-          frameRate: { ideal: 60 },
-        },
-      });
-
-      const track = testStream.getVideoTracks()[0];
-      const actualSettings = track.getSettings();
-      track.stop();
-
-      // 更新该摄像头的实际最大能力
-      camera.maxWidth = actualSettings.width || camera.maxWidth;
-      camera.maxHeight = actualSettings.height || camera.maxHeight;
-      camera.maxFrameRate = actualSettings.frameRate || camera.maxFrameRate;
-
-      // 调整设置为设备最大能力
-      this.selectedHeight = camera.maxHeight;
-      this.selectedFrameRate = Math.min(60, camera.maxFrameRate) as 30 | 60;
-
-      this.updateBitrate();
-    } catch (error) {
-      console.error('测试摄像头能力失败:', error);
-    }
-  }
-
-  async mounted() {
-    await this.getCameraCapabilities();
+  mounted(): void {
+    console.log(this.optionsResolution)
   }
 }
 </script>
@@ -253,39 +88,38 @@ export default class GlobalSettings extends Vue {
       <!-- 设备设置 -->
       <Form class="form">
         <p class="tip">设备设置</p>
-        <CellGroup v-if="cameras.length > 0">
+        <CellGroup v-if="availableCameras.length > 0">
           <DropdownMenu
             :direction="screenOrientation.isPortrait ? 'up' : 'down'"
             style="width: 20rem"
           >
             <DropdownItem
               title="摄像头"
-              v-model="selectedCameraId"
+              v-model="currentDevice.deviceId"
               :options="optionsCamera"
-              @change="onCameraChange"
+              @change="switchCamera"
             />
             <DropdownItem
               title="分辨率"
-              v-model="selectedHeight"
-              :options="optionsResolutionFiltered"
+              v-model="settings.height"
+              :options="optionsResolution"
               @change="onResolutionChange"
             />
             <DropdownItem
               title="帧率"
-              v-model="selectedFrameRate"
-              :options="optionsFrameRateFiltered"
+              v-model="settings.frameRate"
+              :options="optionsFramerate"
               @change="onFrameRateChange"
             />
           </DropdownMenu>
         </CellGroup>
-        <div class="bitrate-info" v-if="cameras.length">
+        <div class="bitrate-info" v-if="availableCameras.length">
           <span class="bitrate-label">推流码率:</span>
           <span class="bitrate-value">
-            {{ calculatedBitrate }} kbps ({{ (calculatedBitrate / 1024).toFixed(2) }} Mbps)
+            <!-- {{ calculatedBitrate }} kbps ({{ (calculatedBitrate / 1024).toFixed(2) }} Mbps) -->
           </span>
         </div>
         <div v-else class="bitrate-info">摄像头检测失败</div>
-        <!-- <Button type="primary" round size="small" :disabled="cameras.length === 0" plain @click="applySettings">应用设置</Button> -->
       </Form>
 
       <!-- 登录设置 -->

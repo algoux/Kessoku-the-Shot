@@ -2,10 +2,13 @@
 import { Vue, Options } from 'vue-class-component';
 import { Preferences } from '@capacitor/preferences';
 import { HomePageIndexEnum, HomeState, GetContestInfoResDTO } from '@/typings/data';
-import { Inject, Provide } from 'vue-property-decorator';
+import { Inject, Provide, Prop } from 'vue-property-decorator';
 import { ScreenOrientationState } from '@/typings/data';
+import MediaDeviceManager from '@/service/media-device-manager';
+import { reactive, toRaw } from 'vue';
+import { Resolution } from '@/typings/data';
 
-import { Button, Tabbar, TabbarItem, Popup } from 'vant';
+import { Button, Tabbar, TabbarItem, Popup, Overlay, Loading } from 'vant';
 import { User, Home, Settings } from 'lucide-vue-next';
 import VideoContainer from '@/components/video-container.vue';
 import GlobalSettings from '@/components/global-settings.vue';
@@ -20,6 +23,8 @@ import HomeNavBar from '@/components/home-nav-bar.vue';
     Tabbar,
     TabbarItem,
     Popup,
+    Overlay,
+    Loading,
     User,
     Home,
     Settings,
@@ -27,26 +32,96 @@ import HomeNavBar from '@/components/home-nav-bar.vue';
 })
 export default class HomeView extends Vue {
   show: boolean = false;
+  showOverlay: boolean = false;
+  currentPageIndex: HomePageIndexEnum = HomePageIndexEnum.HOME;
+  @Inject()
+  screenOrientation!: ScreenOrientationState;
   @Provide()
   homeState: HomeState = {
     userName: '',
   };
-  currentPageIndex: HomePageIndexEnum = HomePageIndexEnum.HOME;
 
-  @Inject()
-  screenOrientation!: ScreenOrientationState;
+  /**
+   * 媒体设备管理状态
+   */
+  mediaDeviceManager: MediaDeviceManager = new MediaDeviceManager();
+  @Provide({ reactive: true })
+  loadCameraSuccess: boolean = false;
+  @Provide({ reactive: true })
+  currentDevice: MediaDeviceInfo | null = null;
+  @Provide({ reactive: true })
+  stream: MediaStream | null = null;
+  @Provide({ reactive: true })
+  settings: MediaTrackSettings | null = null;
+  @Provide({ reactive: true })
+  capabilities: MediaTrackCapabilities | null = null;
+  @Provide({ reactive: true })
+  availableCameras: MediaDeviceInfo[] = [];
+  @Provide({ reactive: true })
+  resolutionList: Resolution[] = [];
+
+  /**
+   * 设备设置状态 & 方法
+   */
+  @Provide()
+  async handleResolutionChange(width: number, height: number) {
+    await this.mediaDeviceManager.setResolution(width, height);
+    this.settings = this.mediaDeviceManager.getCurrentSettings();
+  }
+
+  @Provide()
+  async handleFrameRateChange(frameRate: number) {
+    await this.mediaDeviceManager.setFrameRate(frameRate);
+    this.settings = this.mediaDeviceManager.getCurrentSettings();
+  }
+
+  @Provide()
+  async switchCamera(deviceId: string) {
+    await this.mediaDeviceManager.switchCamera(deviceId);
+    this.settings = this.mediaDeviceManager.getCurrentSettings();
+    this.currentDevice = this.mediaDeviceManager.getCurrentDevice();
+  }
+
+  @Provide()
+  async onResolutionChange(height: number) {
+    const width = Math.round(this.settings.aspectRatio * height);
+    await this.mediaDeviceManager.setResolution(width, height);
+    this.settings = this.mediaDeviceManager.getCurrentSettings();
+  }
+
+  @Provide()
+  async onFrameRateChange(frameRate: number) {
+    await this.mediaDeviceManager.setFrameRate(frameRate);
+    this.settings = this.mediaDeviceManager.getCurrentSettings();
+  }
 
   async mounted() {
-    const localState = await Preferences.get({ key: 'loginState' }).then((res) =>
-      JSON.parse(res.value || '{}'),
-    );
-    if (!localState || !localState.data) {
-      this.$router.push('/login');
-      return;
+    // const localState = await Preferences.get({ key: 'loginState' }).then((res) =>
+    //   JSON.parse(res.value || '{}'),
+    // );
+    // if (!localState || !localState.data) {
+    //   this.$router.push('/login');
+    //   return;
+    // }
+    // console.log('Loaded local login state:', localState.data);
+    // console.log('User name:', localState.data.user.name);
+    // this.homeState.userName = localState.data.user.name || 'Unknown User';
+    try {
+      this.homeState.userName = 'Guest User';
+      this.showOverlay = true;
+      await this.mediaDeviceManager.init();
+      this.availableCameras = this.mediaDeviceManager.getDevices();
+      this.currentDevice = this.mediaDeviceManager.getCurrentDevice();
+      this.stream = await this.mediaDeviceManager.start();
+      this.capabilities = this.mediaDeviceManager.getCapabilities();
+      this.settings = this.mediaDeviceManager.getCurrentSettings();
+      this.resolutionList = this.mediaDeviceManager.getResolutionList();
+      this.loadCameraSuccess = true;
+    } catch (error) {
+      console.error('Error initializing media devices:', error);
+    } finally {
+      this.showOverlay = false;
     }
-    console.log('Loaded local login state:', localState.data);
-    console.log('User name:', localState.data.user.name);
-    this.homeState.userName = localState.data.user.name || 'Unknown User';
   }
 
   @Provide()
@@ -60,16 +135,6 @@ export default class HomeView extends Vue {
     this.show = true;
   }
 
-  @Provide()
-  async applyVideoSettings(settings: any) {
-    const videoContainer = this.$refs.videoContainer as any;
-    if (videoContainer) {
-      // 更新 video-container 的设置
-      videoContainer.settings = settings;
-      await videoContainer.applySettings();
-    }
-  }
-
   showPopup() {
     this.show = true;
   }
@@ -77,6 +142,9 @@ export default class HomeView extends Vue {
 </script>
 
 <template>
+  <Overlay :show="showOverlay" style="display: flex; justify-content: center; align-items: center">
+    <Loading type="spinner" size="24"> 加载设备... </Loading>
+  </Overlay>
   <div class="home-view">
     <Popup v-model:show="show" position="bottom">
       <template #default>
