@@ -1,13 +1,14 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
-import { Form, CellGroup, Field, Button, Icon, Image } from 'vant';
+import { Form, CellGroup, Field, Button, Icon, Image, showNotify } from 'vant';
 import logo from '@/assets/favicon.png';
-import { User, KeyRound, Eye, EyeOff } from 'lucide-vue-next';
+import { User, KeyRound, Eye, EyeOff, Target } from 'lucide-vue-next';
 import { Preferences } from '@capacitor/preferences';
 import { LoginState } from '@/typings/data';
 import { ScreenOrientationState } from '@/typings/data';
 import { Inject } from 'vue-property-decorator';
 import SocketManager from '@/service/socket-manager';
+import { v4 as uuidv4 } from 'uuid';
 
 @Options({
   components: {
@@ -17,8 +18,10 @@ import SocketManager from '@/service/socket-manager';
     Button,
     Icon,
     Image,
+    showNotify,
     User,
     KeyRound,
+    Target,
     Eye,
     EyeOff,
   },
@@ -30,6 +33,7 @@ export default class LoginView extends Vue {
   loginState: LoginState = {
     shotToken: '',
     alias: '',
+    shotName: '',
   };
 
   socketManager: SocketManager | null = null;
@@ -47,7 +51,11 @@ export default class LoginView extends Vue {
 
   handleConnectError(error: Error) {
     console.error('Socket connection error:', error);
-    alert(`连接错误: ${error.message}`);
+    // alert(`连接错误: ${error.message}`);
+    showNotify({
+      type: 'danger',
+      message: `服务器连接错误`,
+    });
     this.loading = false;
     SocketManager.reset();
   }
@@ -63,7 +71,13 @@ export default class LoginView extends Vue {
       const contestInfo = await this.socketManager.getContestInfo();
       await Preferences.set({
         key: 'loginState',
-        value: JSON.stringify(contestInfo),
+        value: JSON.stringify({
+          shotId: `s-${uuidv4().substring(0, 18)}`,
+          shotName: this.loginState.shotName,
+          alias: contestInfo.alias,
+          contest: contestInfo.contest,
+          serverTimestamp: contestInfo.serverTimestamp
+        }),
       });
       this.$router.push('/');
     } catch (error) {
@@ -85,7 +99,23 @@ export default class LoginView extends Vue {
         <Field
           v-model="loginState.alias"
           label="alias"
-          placeholder="Enter contest alias"
+          placeholder="contest alias"
+          clearable
+          class="text-input"
+          label-align="center"
+          size="large"
+          label-width="50"
+        >
+          <template #left-icon>
+            <Icon>
+              <Target :stroke-width="1" size="18" />
+            </Icon>
+          </template>
+        </Field>
+        <Field
+          v-model="loginState.shotName"
+          label="name"
+          placeholder="unique shot name"
           clearable
           class="text-input"
           label-align="center"
@@ -102,7 +132,7 @@ export default class LoginView extends Vue {
           v-model="loginState.shotToken"
           :type="passwordType"
           label="token"
-          placeholder="Enter your Token"
+          placeholder="shot token"
           label-align="center"
           label-width="50"
           clearable

@@ -2,7 +2,7 @@
 import { Vue, Options } from 'vue-class-component';
 import { Inject, Ref } from 'vue-property-decorator';
 import { ScreenOrientationState } from '@/typings/data';
-import { Resolution } from '@/typings/data';
+import { Resolution, SimulcastConfig } from '@/typings/data';
 
 import { Form, CellGroup, Field, Button, DropdownItem, DropdownMenu, Icon } from 'vant';
 import { HeartIcon, X } from 'lucide-vue-next';
@@ -41,6 +41,8 @@ export default class GlobalSettings extends Vue {
   onResolutionChange!: (width: number, height: number) => Promise<void>;
   @Inject()
   onFrameRateChange!: (frameRate: number) => Promise<void>;
+  @Inject()
+  simulCastConfigs!: SimulcastConfig[];
 
   get optionsCamera() {
     return this.availableCameras.map((device) => ({
@@ -114,9 +116,8 @@ export default class GlobalSettings extends Vue {
           </DropdownMenu>
         </CellGroup>
         <div class="bitrate-info" v-if="availableCameras.length">
-          <span class="bitrate-label">推流码率:</span>
+          <span class="bitrate-label">推流码率: {{ simulCastConfigs[0].bitrate }} bps</span>
           <span class="bitrate-value">
-            <!-- {{ calculatedBitrate }} kbps ({{ (calculatedBitrate / 1024).toFixed(2) }} Mbps) -->
           </span>
         </div>
         <div v-else class="bitrate-info">摄像头检测失败</div>

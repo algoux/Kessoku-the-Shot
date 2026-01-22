@@ -8,10 +8,11 @@ export enum HomePageIndexEnum {
 export interface LoginState {
   alias: string;
   shotToken: string;
+  shotName: string;
 }
 
 export interface HomeState {
-  userName: string;
+  shotName: string;
 }
 
 export interface ScreenOrientationState {

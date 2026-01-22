@@ -8,7 +8,7 @@ export default class SocketManager {
 
   private constructor(alias: string, shotToken: string, onConnectError?: (error: Error) => void) {
     this.onConnectErrorCallback = onConnectError;
-    
+    console.log(alias, shotToken)
     this.socket = io('https://rl-broadcast-hub.algoux.cn/shot', {
       transports: ['websocket'],
       path: undefined,
@@ -16,7 +16,7 @@ export default class SocketManager {
         'X-UCA': alias,
       },
       auth: {
-        token: shotToken,
+        shotToken: shotToken,
       },
       reconnection: true,
       reconnectionAttempts: Infinity,

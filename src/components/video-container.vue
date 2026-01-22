@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
-import { ScreenOrientationState } from '@/typings/data';
+import { ScreenOrientationState, SimulcastConfig } from '@/typings/data';
 import { Inject, Watch } from 'vue-property-decorator';
 import { Camera } from 'lucide-vue-next';
 
@@ -20,9 +20,11 @@ export default class VideoContainer extends Vue {
   @Inject()
   stream: MediaStream;
   @Inject()
-  settings: MediaTrackSettings;
+  settings: MediaTrackSettings | null;
   @Inject()
   loadCameraSuccess!: boolean;
+  @Inject()
+  simulCastConfigs!: SimulcastConfig[];
 
   @Watch('stream')
   async onStreamChanged(newStream: MediaStream) {
@@ -37,7 +39,11 @@ export default class VideoContainer extends Vue {
     await video.play();
   }
 
-  async mounted() {}
+  async mounted() {
+
+    // const simulcastConfigs = generateSimulcastConfigs(this.settings.width, this.settings.height, this.settings.frameRate);
+    // console.log(simulcastConfigs);
+  }
 }
 </script>
 
@@ -58,8 +64,9 @@ export default class VideoContainer extends Vue {
 
       <!-- 设备参数预览（横屏时在video内部） -->
       <div
-        class="device-info device-info-landscape"
-        v-if="!screenOrientation.isPortrait && loadCameraSuccess && settings.deviceId"
+        class="device-info"
+        v-if="settings"
+        :class="screenOrientation.isPortrait ? 'device-info-portrait' : 'device-info-landscape'"
       >
         <div class="info-item">
           <span class="info-label">分辨率:</span>
@@ -71,27 +78,8 @@ export default class VideoContainer extends Vue {
         </div>
         <div class="info-item">
           <span class="info-label">码率:</span>
-          <!-- <span class="info-value">{{ (settings.bitrate / 1024).toFixed(2) }} Mbps</span> -->
+          <span>{{ this.simulCastConfigs[0].bitrate }} bps</span>
         </div>
-      </div>
-    </div>
-
-    <!-- 设备参数预览（竖屏时在video外部） -->
-    <div
-      class="device-info device-info-portrait"
-      v-if="screenOrientation.isPortrait && loadCameraSuccess && settings.deviceId"
-    >
-      <div class="info-item">
-        <span class="info-label">分辨率:</span>
-        <span class="info-value">{{ settings.width }}x{{ settings.height }}</span>
-      </div>
-      <div class="info-item">
-        <span class="info-label">帧率:</span>
-        <span class="info-value">{{ settings.frameRate.toFixed(1) }} FPS</span>
-      </div>
-      <div class="info-item">
-        <span class="info-label">码率:</span>
-        <!-- <span class="info-value">{{ (settings.bitrate / 1024).toFixed(2) }} Mbps</span> -->
       </div>
     </div>
   </div>
@@ -119,8 +107,9 @@ export default class VideoContainer extends Vue {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
   position: relative;
-  overflow: hidden;
+  // overflow: hidden;
 
   & video {
     width: 100%;
@@ -143,14 +132,6 @@ export default class VideoContainer extends Vue {
     align-items: center;
     gap: 6px;
     font-size: 13px;
-
-    .info-label {
-      color: rgba(255, 255, 255, 0.7);
-    }
-
-    .info-value {
-      color: #fff;
-    }
   }
 }
 
@@ -161,6 +142,7 @@ export default class VideoContainer extends Vue {
   transform: translateX(-50%);
   z-index: 5;
   white-space: nowrap;
+  color: white;
 
   .info-item {
     font-size: 12px;

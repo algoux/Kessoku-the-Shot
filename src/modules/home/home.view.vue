@@ -6,7 +6,7 @@ import { Inject, Provide, Prop } from 'vue-property-decorator';
 import { ScreenOrientationState } from '@/typings/data';
 import MediaDeviceManager from '@/service/media-device-manager';
 import { reactive, toRaw } from 'vue';
-import { Resolution } from '@/typings/data';
+import { Resolution, SimulcastConfig } from '@/typings/data';
 
 import { Button, Tabbar, TabbarItem, Popup, Overlay, Loading } from 'vant';
 import { User, Home, Settings } from 'lucide-vue-next';
@@ -38,7 +38,7 @@ export default class HomeView extends Vue {
   screenOrientation!: ScreenOrientationState;
   @Provide()
   homeState: HomeState = {
-    userName: '',
+    shotName: '',
   };
 
   /**
@@ -59,7 +59,6 @@ export default class HomeView extends Vue {
   availableCameras: MediaDeviceInfo[] = [];
   @Provide({ reactive: true })
   resolutionList: Resolution[] = [];
-
   /**
    * 设备设置状态 & 方法
    */
@@ -95,6 +94,25 @@ export default class HomeView extends Vue {
     this.settings = this.mediaDeviceManager.getCurrentSettings();
   }
 
+  @Provide({ reactive: true })
+  get simulCastConfigs(): SimulcastConfig[] {
+    return [
+      {
+        rid: 'origin',
+        scaleResolutionDownBy: 1.0,
+        bitrate: this.settings.width * this.settings.height * this.settings.frameRate * 0.000078125,
+      },
+      {
+        rid: 'low',
+        scaleResolutionDownBy: 4.0,
+        bitrate:
+          (((this.settings.width / 4) * this.settings.height) / 4) *
+          this.settings.frameRate *
+          0.000078125,
+      },
+    ];
+  }
+
   async mounted() {
     // const localState = await Preferences.get({ key: 'loginState' }).then((res) =>
     //   JSON.parse(res.value || '{}'),
@@ -104,11 +122,22 @@ export default class HomeView extends Vue {
     //   return;
     // }
     // console.log('Loaded local login state:', localState.data);
-    // console.log('User name:', localState.data.user.name);
-    // this.homeState.userName = localState.data.user.name || 'Unknown User';
+    // this.homeState.shotName = localState.data.shotName || 'Unknown User';
+    this.homeState.shotName = 'Test User';
     try {
-      this.homeState.userName = 'Guest User';
       this.showOverlay = true;
+      console.log('Initializing media devices...');
+      await this.initializeMediaDevices();
+      this.loadCameraSuccess = true;
+    } catch (error) {
+      console.error('Error initializing media devices:', error);
+    } finally {
+      this.showOverlay = false;
+    }
+  }
+
+  private async initializeMediaDevices() {
+    try {
       await this.mediaDeviceManager.init();
       this.availableCameras = this.mediaDeviceManager.getDevices();
       this.currentDevice = this.mediaDeviceManager.getCurrentDevice();
@@ -116,11 +145,8 @@ export default class HomeView extends Vue {
       this.capabilities = this.mediaDeviceManager.getCapabilities();
       this.settings = this.mediaDeviceManager.getCurrentSettings();
       this.resolutionList = this.mediaDeviceManager.getResolutionList();
-      this.loadCameraSuccess = true;
     } catch (error) {
-      console.error('Error initializing media devices:', error);
-    } finally {
-      this.showOverlay = false;
+      console.log(error);
     }
   }
 
