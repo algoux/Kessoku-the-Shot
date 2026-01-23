@@ -76,11 +76,6 @@ export default class MediaDeviceManager {
 
     this.videoTrack = this.stream.getVideoTracks()[0];
     this.capabilities = this.videoTrack.getCapabilities();
-    // const bestResolution = this.getBestResolution(this.capabilities);
-    // await this.videoTrack.applyConstraints({
-    //   width: { exact: bestResolution.width },
-    //   height: { exact: bestResolution.height },
-    // })
     this.settings = this.videoTrack.getSettings();
     this.genResolutionList(this.settings);
     this.updateSimulcastConfig();

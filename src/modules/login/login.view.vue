@@ -51,7 +51,6 @@ export default class LoginView extends Vue {
 
   handleConnectError(error: Error) {
     console.error('Socket connection error:', error);
-    // alert(`连接错误: ${error.message}`);
     showNotify({
       type: 'danger',
       message: `服务器连接错误`,
@@ -69,14 +68,17 @@ export default class LoginView extends Vue {
         this.handleConnectError.bind(this),
       );
       const contestInfo = await this.socketManager.getContestInfo();
+      console.log('Contest Info:', contestInfo);
+      console.log('alias', contestInfo.data.alias);
+      console.log('contest', contestInfo.data.contest);
+      console.log('serverTimestamp', contestInfo.data.serverTimestamp);
       await Preferences.set({
         key: 'loginState',
         value: JSON.stringify({
-          shotId: `s-${uuidv4().substring(0, 18)}`,
           shotName: this.loginState.shotName,
-          alias: contestInfo.alias,
-          contest: contestInfo.contest,
-          serverTimestamp: contestInfo.serverTimestamp
+          alias: contestInfo.data.alias,
+          contest: contestInfo.data.contest,
+          serverTimestamp: contestInfo.data.serverTimestamp
         }),
       });
       this.$router.push('/');

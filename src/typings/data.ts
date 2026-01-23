@@ -13,6 +13,8 @@ export interface LoginState {
 
 export interface HomeState {
   shotName: string;
+  // contestInfo: Contest;
+  title: string;
 }
 
 export interface ScreenOrientationState {
@@ -21,9 +23,13 @@ export interface ScreenOrientationState {
 }
 
 export interface GetContestInfoResDTO {
-  alias: string;
-  contest: Contest;
-  serverTimestamp: number;
+  success: boolean;
+  code: number;
+  data: {
+    alias: string;
+    contest: Contest;
+    serverTimestamp: number;
+  };
 }
 
 export interface ConnectErrorResDTO {

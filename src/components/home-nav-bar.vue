@@ -5,7 +5,7 @@ import { HomeState, ScreenOrientationState } from '@/typings/data';
 
 import { NavBar, Image, Button, Icon, Popover } from 'vant';
 import logo from '@/assets/favicon.png';
-import { CirclePlay, ChevronDown } from 'lucide-vue-next';
+import { CirclePlay, ChevronDown, CirclePause } from 'lucide-vue-next';
 
 @Options({
   components: {
@@ -15,12 +15,15 @@ import { CirclePlay, ChevronDown } from 'lucide-vue-next';
     Icon,
     CirclePlay,
     ChevronDown,
+    CirclePause,
     Popover,
   },
 })
 export default class HomeNavBar extends Vue {
   logo = logo;
   showMenu = false;
+  @Inject()
+  isReady!: boolean;
 
   @Inject()
   homeState!: HomeState;
@@ -34,6 +37,9 @@ export default class HomeNavBar extends Vue {
   @Inject()
   openDeviceSettings!: () => void;
 
+  @Inject()
+  changeReadyState!: () => Promise<void>;
+
   menuActions = [
     { text: '设备设置', value: 'settings', icon: 'setting-o' },
     { text: '退出登录', value: 'logout', icon: 'user' },
@@ -46,6 +52,10 @@ export default class HomeNavBar extends Vue {
     } else if (action.value === 'logout') {
       this.logout();
     }
+  }
+
+  async onReadyClick() {
+    await this.changeReadyState();
   }
 }
 </script>
@@ -62,7 +72,7 @@ export default class HomeNavBar extends Vue {
           @select="onMenuSelect"
         >
           <template #reference>
-            <div class="userinfo userinfo-dropdown">
+            <div class="userinfo userinfo-dropdown" :class="isReady ? 'ready-state' : ''">
               <Image
                 :src="logo"
                 alt="Logo"
@@ -71,7 +81,7 @@ export default class HomeNavBar extends Vue {
                 fit="cover"
                 round
               />
-              <span>{{ this.homeState.shotName }}</span>
+              <span class="shotName">{{ homeState.shotName }}</span>
               <ChevronDown
                 :size="20"
                 :class="{ 'icon-rotate': showMenu }"
@@ -83,26 +93,45 @@ export default class HomeNavBar extends Vue {
 
         <div v-else class="userinfo">
           <Image :src="logo" alt="Logo" width="34" style="margin-right: 0.5rem" fit="cover" round />
-          <span>{{ this.homeState.shotName }}</span>
+          <span>{{ homeState.shotName }}</span>
         </div>
 
-        <Button type="primary" round>
+        <Button :type="isReady ? 'danger' : 'primary'" round @click="onReadyClick">
           <template #icon>
-            <CirclePlay size="18" color="#fff" />
+            <CirclePlay v-if="!isReady" size="18" color="#fff" />
+            <CirclePause v-else size="18" color="#fff" />
           </template>
-          <span> Ready </span>
+          <span> {{ isReady ? 'Cancel Ready' : 'Ready' }} </span>
         </Button>
+        <span class="contest-info" :class="isReady ? 'ready-state' : ''">{{
+          homeState.title
+        }}</span>
       </div>
     </template>
   </NavBar>
 </template>
 
 <style scoped lang="less">
+.ready-state {
+  opacity: 0.5 !important;
+}
+
+.contest-info {
+  position: absolute;
+  bottom: 0;
+  font-size: 0.7rem;
+}
 
 .home-header {
   :deep(.van-nav-bar__title) {
     width: 100%;
     max-width: 100%;
+  }
+
+  :deep(.van-button__icon) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   & .home-header-content {
@@ -111,8 +140,10 @@ export default class HomeNavBar extends Vue {
     font-weight: bold;
     display: flex;
     justify-content: space-between;
+    position: relative;
     align-items: center;
     padding: 0rem 2rem;
+    padding-bottom: 2rem;
     border: none;
     outline: none;
     box-sizing: border-box;
@@ -120,6 +151,10 @@ export default class HomeNavBar extends Vue {
     & .userinfo {
       display: flex;
       align-items: center;
+
+      & .shotName {
+        font-size: 1.2rem;
+      }
 
       &.userinfo-dropdown {
         cursor: pointer;

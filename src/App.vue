@@ -1,12 +1,11 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
-import { Provide, Watch } from 'vue-property-decorator';
+import { Provide } from 'vue-property-decorator';
 import { ConfigProvider } from 'vant';
-import { Camera } from '@capacitor/camera';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
-import { StatusBar, Style } from '@capacitor/status-bar';
-import { Capacitor } from '@capacitor/core';
 import { ScreenOrientationState } from './typings/data';
+import SocketManager from './service/socket-manager';
+import { Preferences } from '@capacitor/preferences';
 
 @Options({
   components: {
@@ -15,6 +14,9 @@ import { ScreenOrientationState } from './typings/data';
 })
 export default class App extends Vue {
   theme = 'light';
+
+  @Provide({ reactive: true })
+  socketManager!: SocketManager;
 
   themeVars = {
     // navBarHeight: '0rem',
@@ -27,6 +29,23 @@ export default class App extends Vue {
   };
 
   async mounted() {
+    await this.initTheme();
+    const localState = await Preferences.get({ key: 'loginState' }).then((res) =>
+      JSON.parse(res.value || '{}'),
+    );
+    console.log('Retrieved local login state:', localState);
+    if (!localState.shotName || !localState.contest || !localState.alias) {
+      console.log('No valid login state found, redirecting to login page.');
+      this.$router.push('/login');
+      return;
+    } else {
+      this.socketManager = SocketManager.getInstance(localState.alias, localState.shotToken);
+    }
+  }
+
+  async login(alias: string, token: string) {}
+
+  async initTheme() {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     this.theme = isDark ? 'dark' : 'light';
 
@@ -44,10 +63,6 @@ export default class App extends Vue {
       const isLandscape = event.type.startsWith('landscape');
       this.screenOrientation = { isPortrait, isLandscape };
     });
-
-    // await Camera.requestPermissions({
-    //   permissions: ['camera'],
-    // });
   }
 }
 </script>

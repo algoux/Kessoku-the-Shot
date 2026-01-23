@@ -7,6 +7,7 @@ import { ScreenOrientationState } from '@/typings/data';
 import MediaDeviceManager from '@/service/media-device-manager';
 import { reactive, toRaw } from 'vue';
 import { Resolution, SimulcastConfig } from '@/typings/data';
+import { Contest } from '@/typings/srk';
 
 import { Button, Tabbar, TabbarItem, Popup, Overlay, Loading } from 'vant';
 import { User, Home, Settings } from 'lucide-vue-next';
@@ -36,9 +37,12 @@ export default class HomeView extends Vue {
   currentPageIndex: HomePageIndexEnum = HomePageIndexEnum.HOME;
   @Inject()
   screenOrientation!: ScreenOrientationState;
-  @Provide()
+  @Provide({ reactive: true})
+  isReady: boolean = false;
+  @Provide({ reactive: true })
   homeState: HomeState = {
     shotName: '',
+    title: '',
   };
 
   /**
@@ -59,6 +63,11 @@ export default class HomeView extends Vue {
   availableCameras: MediaDeviceInfo[] = [];
   @Provide({ reactive: true })
   resolutionList: Resolution[] = [];
+
+  @Provide()
+  async changeReadyState() {
+    this.isReady = !this.isReady;
+  }
   /**
    * 设备设置状态 & 方法
    */
@@ -114,16 +123,19 @@ export default class HomeView extends Vue {
   }
 
   async mounted() {
-    // const localState = await Preferences.get({ key: 'loginState' }).then((res) =>
-    //   JSON.parse(res.value || '{}'),
-    // );
-    // if (!localState || !localState.data) {
-    //   this.$router.push('/login');
-    //   return;
-    // }
-    // console.log('Loaded local login state:', localState.data);
-    // this.homeState.shotName = localState.data.shotName || 'Unknown User';
-    this.homeState.shotName = 'Test User';
+    const localState = await Preferences.get({ key: 'loginState' }).then((res) =>
+      JSON.parse(res.value || '{}'),
+    );
+    console.log('Retrieved local login state:', localState);
+    if (!localState.shotName || !localState.contest) {
+      console.log('No valid login state found, redirecting to login page.');
+      this.$router.push('/login');
+      return;
+    }
+    this.homeState = {
+      shotName: localState.shotName || 'Unknown User',
+      title: localState.contest.title || 'Unknown Contest',
+    };
     try {
       this.showOverlay = true;
       console.log('Initializing media devices...');

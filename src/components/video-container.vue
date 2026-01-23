@@ -13,7 +13,8 @@ export default class VideoContainer extends Vue {
   videoRef: HTMLVideoElement | null = null;
 
   showOverlay = false;
-
+  @Inject()
+  isReady!: boolean;
   @Inject()
   screenOrientation!: ScreenOrientationState;
 
@@ -86,6 +87,10 @@ export default class VideoContainer extends Vue {
 </template>
 
 <style scoped lang="less">
+.ready-state {
+  opacity: 0.5;
+}
+
 .camera-icon {
   width: 100%;
   height: 100%;

@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
-import { LoginState, GetContestInfoResDTO, ConnectErrorResDTO } from '@/typings/data';
+import { GetContestInfoResDTO } from '@/typings/data';
+import { v4 as uuidv4 } from 'uuid';
 
 export default class SocketManager {
   private static instance: SocketManager | null = null;
@@ -8,14 +9,15 @@ export default class SocketManager {
 
   private constructor(alias: string, shotToken: string, onConnectError?: (error: Error) => void) {
     this.onConnectErrorCallback = onConnectError;
-    console.log(alias, shotToken)
+    console.log(alias, shotToken);
     this.socket = io('https://rl-broadcast-hub.algoux.cn/shot', {
       transports: ['websocket'],
       path: undefined,
-      extraHeaders: {
-        'X-UCA': alias,
+      query: {
+        uca: alias,
       },
       auth: {
+        id: `s-${uuidv4().substring(0, 18)}`,
         shotToken: shotToken,
       },
       reconnection: true,
