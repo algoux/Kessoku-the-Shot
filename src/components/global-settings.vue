@@ -1,11 +1,10 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
-import { Inject, Ref } from 'vue-property-decorator';
-import { ScreenOrientationState } from '@/typings/data';
-import { Resolution, SimulcastConfig } from '@/typings/data';
+import { Inject } from 'vue-property-decorator';
+import { Resolution, SimulcastConfig, ScreenOrientationState } from '@/typings/data';
 
 import { Form, CellGroup, Field, Button, DropdownItem, DropdownMenu, Icon } from 'vant';
-import { HeartIcon, X } from 'lucide-vue-next';
+import { X } from 'lucide-vue-next';
 
 @Options({
   components: {
@@ -73,7 +72,7 @@ export default class GlobalSettings extends Vue {
   }
 
   mounted(): void {
-    console.log(this.optionsResolution)
+    console.log(this.optionsResolution);
   }
 }
 </script>
@@ -117,8 +116,7 @@ export default class GlobalSettings extends Vue {
         </CellGroup>
         <div class="bitrate-info" v-if="availableCameras.length">
           <span class="bitrate-label">推流码率: {{ simulCastConfigs[0].bitrate }} bps</span>
-          <span class="bitrate-value">
-          </span>
+          <span class="bitrate-value"> </span>
         </div>
         <div v-else class="bitrate-info">摄像头检测失败</div>
       </Form>

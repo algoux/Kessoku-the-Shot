@@ -1,14 +1,11 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
-import { Form, CellGroup, Field, Button, Icon, Image, showNotify } from 'vant';
-import logo from '@/assets/favicon.png';
-import { User, KeyRound, Eye, EyeOff, Target } from 'lucide-vue-next';
-import { Preferences } from '@capacitor/preferences';
-import { LoginState } from '@/typings/data';
-import { ScreenOrientationState } from '@/typings/data';
 import { Inject } from 'vue-property-decorator';
-import SocketManager from '@/service/socket-manager';
-import { v4 as uuidv4 } from 'uuid';
+import { LoginState, ScreenOrientationState } from '@/typings/data';
+
+import { Form, CellGroup, Field, Button, Icon, Image, showNotify } from 'vant';
+import { User, KeyRound, Eye, EyeOff, Target } from 'lucide-vue-next';
+import logo from '@/assets/favicon.png';
 
 @Options({
   components: {
@@ -48,34 +45,6 @@ export default class LoginView extends Vue {
   }
 
   async handleLogin() {
-    // try {
-    //   this.loading = true;
-    //   this.socketManager = SocketManager.getInstance(
-    //     this.loginState.alias,
-    //     this.loginState.shotToken,
-    //     this.handleConnectError.bind(this),
-    //   );
-    //   const contestInfo = await this.socketManager.getContestInfo();
-    //   console.log('Contest Info:', contestInfo);
-    //   console.log('alias', contestInfo.data.alias);
-    //   console.log('contest', contestInfo.data.contest);
-    //   console.log('serverTimestamp', contestInfo.data.serverTimestamp);
-    //   await Preferences.set({
-    //     key: 'loginState',
-    //     value: JSON.stringify({
-    //       shotName: this.loginState.shotName,
-    //       alias: contestInfo.data.alias,
-    //       contest: contestInfo.data.contest,
-    //       serverTimestamp: contestInfo.data.serverTimestamp
-    //     }),
-    //   });
-    //   this.$router.push('/');
-    // } catch (error) {
-    //   console.error('Login failed:', error);
-    //   alert(`登录失败: ${error}`);
-    // } finally {
-    //   this.loading = false;
-    // }
     await this.login(this.loginState.alias, this.loginState.shotName, this.loginState.shotToken);
   }
 }

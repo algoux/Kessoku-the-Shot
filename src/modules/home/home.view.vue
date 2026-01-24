@@ -1,11 +1,15 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
 import { Preferences } from '@capacitor/preferences';
-import { HomePageIndexEnum, HomeState, GetContestInfoResDTO } from '@/typings/data';
-import { Inject, Provide, Prop } from 'vue-property-decorator';
-import { ScreenOrientationState, GetConfirmReadyReqDTO } from '@/typings/data';
+import { Inject, Provide } from 'vue-property-decorator';
+import {
+  ScreenOrientationState,
+  Resolution,
+  SimulcastConfig,
+  HomePageIndexEnum,
+  HomeState,
+} from '@/typings/data';
 import MediaDeviceManager from '@/service/media-device-manager';
-import { Resolution, SimulcastConfig } from '@/typings/data';
 import WebRTCManager from '@/service/webrtc-manager';
 import SocketManager from '@/service/socket-manager';
 
@@ -82,7 +86,11 @@ export default class HomeView extends Vue {
         tracks: [defaultTrack],
       });
 
-      console.log('Received transport and router RTP capabilities:', transport, routerRtpCapabilities);
+      console.log(
+        'Received transport and router RTP capabilities:',
+        transport,
+        routerRtpCapabilities,
+      );
 
       // let tracks = this.stream?.getVideoTracks();
       // const res = this.socketManager.handleConfirmReady({
@@ -135,17 +143,32 @@ export default class HomeView extends Vue {
       {
         rid: 'origin',
         scaleResolutionDownBy: 1.0,
-        bitrate: this.calulateBitrate(this.settings.width, this.settings.height, this.settings.frameRate, 1.0),
+        bitrate: this.calulateBitrate(
+          this.settings.width,
+          this.settings.height,
+          this.settings.frameRate,
+          1.0,
+        ),
       },
       {
         rid: 'low',
         scaleResolutionDownBy: 4.0,
-        bitrate: this.calulateBitrate(this.settings.width, this.settings.height, this.settings.frameRate, 4.0),
+        bitrate: this.calulateBitrate(
+          this.settings.width,
+          this.settings.height,
+          this.settings.frameRate,
+          4.0,
+        ),
       },
     ];
   }
 
-  private calulateBitrate(width: number, height: number, frameRate: number, scaleResolutionDownBy: number): number {
+  private calulateBitrate(
+    width: number,
+    height: number,
+    frameRate: number,
+    scaleResolutionDownBy: number,
+  ): number {
     const scaledWidth = width / scaleResolutionDownBy;
     const scaledHeight = height / scaleResolutionDownBy;
     return scaledWidth * scaledHeight * frameRate * 0.000078125 * 1000;

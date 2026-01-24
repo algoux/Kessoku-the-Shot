@@ -2,6 +2,7 @@
 import { Vue, Options } from 'vue-class-component';
 import { ScreenOrientationState, SimulcastConfig } from '@/typings/data';
 import { Inject, Watch } from 'vue-property-decorator';
+
 import { Camera } from 'lucide-vue-next';
 
 @Options({
