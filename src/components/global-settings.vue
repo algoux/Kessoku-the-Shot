@@ -71,6 +71,10 @@ export default class GlobalSettings extends Vue {
     }));
   }
 
+  private parseBitrate(bitrate: number) {
+    return Math.round(bitrate / 1e6);
+  }
+
   mounted(): void {
     console.log(this.optionsResolution);
   }
@@ -115,8 +119,7 @@ export default class GlobalSettings extends Vue {
           </DropdownMenu>
         </CellGroup>
         <div class="bitrate-info" v-if="availableCameras.length">
-          <span class="bitrate-label">推流码率: {{ simulCastConfigs[0].bitrate }} bps</span>
-          <span class="bitrate-value"> </span>
+          <span class="bitrate-label">推流码率: {{ parseBitrate(simulCastConfigs[0].bitrate) }} Mbps</span>
         </div>
         <div v-else class="bitrate-info">摄像头检测失败</div>
       </Form>

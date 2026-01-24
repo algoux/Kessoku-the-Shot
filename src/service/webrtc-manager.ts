@@ -1,34 +1,78 @@
 import * as mediasoupClient from 'mediasoup-client';
-type SendTransportOptions = {
-  id: string;
-  iceParameters: any;
-  iceCandidates: any[];
-  dtlsParameters: any;
-};
-
-type ProduceOptions = {
-  encodings?: RTCRtpEncodingParameters[];
-  codecOptions?: any;
-  appData?: any;
-};
-
+import {
+  ProducerOptions,
+  Device,
+  Transport,
+  Producer,
+  TransportOptions,
+  RtpCapabilities,
+} from 'mediasoup-client/types';
+import { OnProduceReqDTO, OnProduceResDTO } from '@/typings/data';
 export default class WebRTCManager {
-  private device: mediasoupClient.types.Device;
-  private sendTransport: mediasoupClient.types.Transport;
-  private producers: Map<string, mediasoupClient.types.Producer[]>;
+  private device: Device;
+  private sendTransport: Transport;
+  private producers: Map<string, Producer[]>;
   constructor(
-    // private readonly signal: {
-    //   requestSendTransport: () => Promise<SendTransportOptions>;
-    //   connectTransport: (params: any) => Promise<void>;
-    //   produce: (params: any) => Promise<{ id: string }>;
-    // },
+    private readonly signal: {
+      connectTransport: (dtlsParameters: any) => Promise<void>;
+      produce: (params: OnProduceReqDTO) => Promise<OnProduceResDTO>;
+    },
   ) {}
 
-  async loadMediasoupClientDevice(routerRtpCapabilities: mediasoupClient.types.RtpCapabilities) {
+  async loadMediasoupClientDevice(routerRtpCapabilities: RtpCapabilities) {
     this.device = new mediasoupClient.Device();
     await this.device.load({ routerRtpCapabilities });
   }
 
-  async createSendTransport(transport: mediasoupClient.types.Transport) {
+  async createSendTransport(transport: TransportOptions) {
+    console.log('Creating send transport with options:', transport);
+    this.sendTransport = this.device.createSendTransport(transport);
+
+    this.sendTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
+      try {
+        await this.signal.connectTransport({ dtlsParameters });
+        callback();
+      } catch (error) {
+        errback(error);
+      }
+    });
+
+    this.sendTransport.on(
+      'produce',
+      async ({ kind, rtpParameters, appData }, callback, errback) => {
+        try {
+          const { producerId } = await this.signal.produce({
+            trackId: 'camera_main',
+            kind,
+            rtpParameters,
+          });
+          callback({ id: producerId });
+        } catch (error) {
+          errback(error);
+        }
+      },
+    );
   }
+
+  async produce(track: MediaStreamTrack, options?: ProducerOptions) {
+    if (!this.sendTransport) {
+      throw new Error('Send transport is not created');
+    }
+
+    const producer = await this.sendTransport.produce({
+      track,
+      ...options,
+    });
+
+    if (!this.producers.has(track.kind)) {
+      this.producers.set(track.kind, []);
+    }
+    this.producers.get(track.kind)!.push(producer);
+
+    return producer;
+  }
+
+  async closeProducers() {}
+
+  async closeSendTransport() {}
 }

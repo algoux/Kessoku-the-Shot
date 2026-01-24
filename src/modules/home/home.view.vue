@@ -91,6 +91,10 @@ export default class HomeView extends Vue {
         transport,
         routerRtpCapabilities,
       );
+      await this.webrtcManager.loadMediasoupClientDevice(routerRtpCapabilities);
+      await this.webrtcManager.createSendTransport(transport);
+
+
 
       // let tracks = this.stream?.getVideoTracks();
       // const res = this.socketManager.handleConfirmReady({

@@ -24,7 +24,7 @@ export default class App extends Vue {
   socketManager!: SocketManager;
 
   @Provide({ reactive: true })
-  webrtcManager: WebRTCManager = new WebRTCManager();
+  webrtcManager: WebRTCManager;
 
   themeVars = {
     // navBarHeight: '0rem',
@@ -72,6 +72,11 @@ export default class App extends Vue {
         shotName: localState.shotName,
         title: localState.contest.title,
       };
+      this.webrtcManager = new WebRTCManager({
+        connectTransport: this.socketManager.handleCcompleteConnectTransport.bind(this.socketManager),
+        produce: this.socketManager.handleProduce.bind(this.socketManager),
+      });
+      this.$router.push('/');
     }
   }
   @Provide()

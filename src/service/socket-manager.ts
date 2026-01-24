@@ -1,7 +1,12 @@
 import { io, Socket } from 'socket.io-client';
 import { GetContestInfoResDTO } from '@/typings/data';
 import { v4 as uuidv4 } from 'uuid';
-import { GetConfirmReadyReqDTO, GetConfirmReadyResDTO } from '@/typings/data';
+import {
+  GetConfirmReadyReqDTO,
+  GetConfirmReadyResDTO,
+  OnProduceReqDTO,
+  OnProduceResDTO,
+} from '@/typings/data';
 
 export default class SocketManager {
   private static instance: SocketManager | null = null;
@@ -72,20 +77,22 @@ export default class SocketManager {
   }
 
   public async handleConfirmReady(data: GetConfirmReadyReqDTO): Promise<GetConfirmReadyResDTO> {
-    return await this.socket.emitWithAck('confirmReady', data);
+    const res = await this.socket.emitWithAck('confirmReady', data);
+    return res.data;
   }
 
-  public async handleCcompleteConnectTransport({dtlsParameters }): Promise<void> {
+  public async handleCcompleteConnectTransport({ dtlsParameters }): Promise<void> {
     await this.socket.emitWithAck('completeConnectTransport', { dtlsParameters });
   }
 
-  public async handleRequestStartBroadcast() {
+  public async handleRequestStartBroadcast() {}
 
+  async handleProduce(data: OnProduceReqDTO): Promise<OnProduceResDTO> {
+    const res = await this.socket.emitWithAck('produce', data);
+    return res.data;
   }
 
   public async handleCancelReady() {
     await this.socket.emitWithAck('cancelReady');
   }
-
-
 }

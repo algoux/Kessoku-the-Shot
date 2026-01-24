@@ -1,5 +1,11 @@
 import { Contest } from './srk';
-import * as mediasoupClient from 'mediasoup-client';
+import {
+  TransportOptions,
+  RtpCapabilities,
+  MediaKind,
+  RtpParameters,
+  Producer,
+} from 'mediasoup-client/types';
 
 export enum HomePageIndexEnum {
   HOME = 0,
@@ -72,10 +78,30 @@ export interface GetConfirmReadyReqDTO {
     trackId: string;
     name: string;
     type: TrackType;
-  }[]
+  }[];
 }
 
 export interface GetConfirmReadyResDTO {
-  transport: mediasoupClient.types.TransportOptions;
-  routerRtpCapabilities: mediasoupClient.types.RtpCapabilities;
+  transport: TransportOptions;
+  routerRtpCapabilities: RtpCapabilities;
+}
+
+export interface RequestBroadcasterDTO {
+  trackIds: string[];
+}
+
+export interface RequestStopBroadcastDTO {
+  trackIds: string[];
+}
+
+export interface OnProduceReqDTO {
+  trackId: string;
+  kind: MediaKind;
+  rtpParameters: RtpParameters;
+}
+
+export interface OnProduceResDTO {
+  producerId: string;
+  type: Producer;
+  appData: any;
 }

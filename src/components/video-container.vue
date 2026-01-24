@@ -41,6 +41,11 @@ export default class VideoContainer extends Vue {
     await video.play();
   }
 
+  // 将码率转换为 Mbps 单位
+  private parseBitrate(bitrate: number) {
+    return Math.round(bitrate / 1e6);
+  }
+
   async mounted() {
 
     // const simulcastConfigs = generateSimulcastConfigs(this.settings.width, this.settings.height, this.settings.frameRate);
@@ -80,7 +85,7 @@ export default class VideoContainer extends Vue {
         </div>
         <div class="info-item">
           <span class="info-label">码率:</span>
-          <span>{{ this.simulCastConfigs[0].bitrate }} bps</span>
+          <span>{{ this.parseBitrate(this.simulCastConfigs[0].bitrate) }} Mbps</span>
         </div>
       </div>
     </div>
