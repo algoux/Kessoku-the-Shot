@@ -1,22 +1,30 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
 import { Provide } from 'vue-property-decorator';
-import { ConfigProvider } from 'vant';
+import { ConfigProvider, showNotify } from 'vant';
 import { ScreenOrientation } from '@capacitor/screen-orientation';
 import { ScreenOrientationState } from './typings/data';
 import SocketManager from './service/socket-manager';
 import { Preferences } from '@capacitor/preferences';
+import { HomeState } from './typings/data';
+import WebRTCManager from './service/webrtc-manager';
 
 @Options({
   components: {
     ConfigProvider,
+    showNotify,
   },
 })
 export default class App extends Vue {
   theme = 'light';
+  @Provide({ reactive: true })
+  loading: boolean = false;
 
   @Provide({ reactive: true })
   socketManager!: SocketManager;
+
+  @Provide({ reactive: true })
+  webrtcManager: WebRTCManager = new WebRTCManager();
 
   themeVars = {
     // navBarHeight: '0rem',
@@ -27,6 +35,22 @@ export default class App extends Vue {
     isPortrait: true,
     isLandscape: false,
   };
+
+  @Provide({ reactive: true })
+  homeState: HomeState = {
+    shotName: '',
+    title: '',
+  };
+
+  handleConnectError(error: Error) {
+    console.error('Socket connection error:', error);
+    showNotify({
+      type: 'danger',
+      message: `服务器连接错误`,
+    });
+    this.loading = false;
+    SocketManager.reset();
+  }
 
   async mounted() {
     await this.initTheme();
@@ -39,11 +63,43 @@ export default class App extends Vue {
       this.$router.push('/login');
       return;
     } else {
-      this.socketManager = SocketManager.getInstance(localState.alias, localState.shotToken);
+      this.socketManager = SocketManager.getInstance(
+        localState.alias,
+        localState.shotToken,
+        this.handleConnectError.bind(this),
+      );
+      this.homeState = {
+        shotName: localState.shotName,
+        title: localState.contest.title,
+      };
     }
   }
-
-  async login(alias: string, token: string) {}
+  @Provide()
+  async login(alias: string, shotName: string, token: string) {
+    try {
+      this.socketManager = SocketManager.getInstance(alias, token, this.handleConnectError.bind(this));
+      const contestInfo = await this.socketManager.getContestInfo();
+      console.log('Contest Info:', contestInfo);
+      await Preferences.set({
+        key: 'loginState',
+        value: JSON.stringify({
+          shotName: shotName,
+          alias: contestInfo.data.alias,
+          contest: contestInfo.data.contest,
+          serverTimestamp: contestInfo.data.serverTimestamp,
+          shotToken: token,
+        }),
+      });
+      this.homeState = {
+        shotName: shotName,
+        title: String(contestInfo.data.contest.title),
+      };
+      this.$router.push('/');
+    } catch (error) {
+      console.error('Error during login:', error);
+      throw error;
+    }
+  }
 
   async initTheme() {
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;

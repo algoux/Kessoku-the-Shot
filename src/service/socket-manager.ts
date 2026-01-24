@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import { GetContestInfoResDTO } from '@/typings/data';
 import { v4 as uuidv4 } from 'uuid';
+import { GetConfirmReadyReqDTO, GetConfirmReadyResDTO } from '@/typings/data';
 
 export default class SocketManager {
   private static instance: SocketManager | null = null;
@@ -34,6 +35,11 @@ export default class SocketManager {
       console.error('socket connect_error:', err.message);
       this.onConnectErrorCallback(err);
     });
+
+    // todo
+    // this.socket.on('disconnect', () => {
+    //   this.socket.emit('cancelReady')
+    // })
   }
 
   public static getInstance(
@@ -64,4 +70,22 @@ export default class SocketManager {
     const contestInfo = await this.socket.emitWithAck('getContestInfo');
     return contestInfo;
   }
+
+  public async handleConfirmReady(data: GetConfirmReadyReqDTO): Promise<GetConfirmReadyResDTO> {
+    return await this.socket.emitWithAck('confirmReady', data);
+  }
+
+  public async handleCcompleteConnectTransport({dtlsParameters }): Promise<void> {
+    await this.socket.emitWithAck('completeConnectTransport', { dtlsParameters });
+  }
+
+  public async handleRequestStartBroadcast() {
+
+  }
+
+  public async handleCancelReady() {
+    await this.socket.emitWithAck('cancelReady');
+  }
+
+
 }

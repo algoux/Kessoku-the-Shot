@@ -27,19 +27,17 @@ import { v4 as uuidv4 } from 'uuid';
   },
 })
 export default class LoginView extends Vue {
+  @Inject() loading!: boolean;
   logoUrl = logo;
   passwordVisible = false;
-  loading: boolean = false;
   loginState: LoginState = {
     shotToken: '',
     alias: '',
     shotName: '',
   };
 
-  socketManager: SocketManager | null = null;
-
-  @Inject()
-  screenOrientation!: ScreenOrientationState;
+  @Inject() screenOrientation!: ScreenOrientationState;
+  @Inject() login: (alias: string, shotName: string, token: string) => Promise<void>;
 
   get passwordType(): string {
     return this.passwordVisible ? 'text' : 'password';
@@ -49,45 +47,36 @@ export default class LoginView extends Vue {
     return this.loginState.alias !== '' && this.loginState.shotToken !== '';
   }
 
-  handleConnectError(error: Error) {
-    console.error('Socket connection error:', error);
-    showNotify({
-      type: 'danger',
-      message: `服务器连接错误`,
-    });
-    this.loading = false;
-    SocketManager.reset();
-  }
-
-  async login() {
-    try {
-      this.loading = true;
-      this.socketManager = SocketManager.getInstance(
-        this.loginState.alias,
-        this.loginState.shotToken,
-        this.handleConnectError.bind(this),
-      );
-      const contestInfo = await this.socketManager.getContestInfo();
-      console.log('Contest Info:', contestInfo);
-      console.log('alias', contestInfo.data.alias);
-      console.log('contest', contestInfo.data.contest);
-      console.log('serverTimestamp', contestInfo.data.serverTimestamp);
-      await Preferences.set({
-        key: 'loginState',
-        value: JSON.stringify({
-          shotName: this.loginState.shotName,
-          alias: contestInfo.data.alias,
-          contest: contestInfo.data.contest,
-          serverTimestamp: contestInfo.data.serverTimestamp
-        }),
-      });
-      this.$router.push('/');
-    } catch (error) {
-      console.error('Login failed:', error);
-      alert(`登录失败: ${error}`);
-    } finally {
-      this.loading = false;
-    }
+  async handleLogin() {
+    // try {
+    //   this.loading = true;
+    //   this.socketManager = SocketManager.getInstance(
+    //     this.loginState.alias,
+    //     this.loginState.shotToken,
+    //     this.handleConnectError.bind(this),
+    //   );
+    //   const contestInfo = await this.socketManager.getContestInfo();
+    //   console.log('Contest Info:', contestInfo);
+    //   console.log('alias', contestInfo.data.alias);
+    //   console.log('contest', contestInfo.data.contest);
+    //   console.log('serverTimestamp', contestInfo.data.serverTimestamp);
+    //   await Preferences.set({
+    //     key: 'loginState',
+    //     value: JSON.stringify({
+    //       shotName: this.loginState.shotName,
+    //       alias: contestInfo.data.alias,
+    //       contest: contestInfo.data.contest,
+    //       serverTimestamp: contestInfo.data.serverTimestamp
+    //     }),
+    //   });
+    //   this.$router.push('/');
+    // } catch (error) {
+    //   console.error('Login failed:', error);
+    //   alert(`登录失败: ${error}`);
+    // } finally {
+    //   this.loading = false;
+    // }
+    await this.login(this.loginState.alias, this.loginState.shotName, this.loginState.shotToken);
   }
 }
 </script>
@@ -96,7 +85,7 @@ export default class LoginView extends Vue {
   <div class="login-container" :class="screenOrientation.isPortrait ? 'shu' : 'heng'">
     <Image :src="logoUrl" width="100" height="100" fit="contain" />
     <h1 class="login-title">Login to Kessoku the Shot</h1>
-    <Form class="login-form" @submit="login">
+    <Form class="login-form" @submit="handleLogin">
       <CellGroup inset>
         <Field
           v-model="loginState.alias"

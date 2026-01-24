@@ -1,4 +1,5 @@
-import { Contest, User } from './srk';
+import { Contest } from './srk';
+import * as mediasoupClient from 'mediasoup-client';
 
 export enum HomePageIndexEnum {
   HOME = 0,
@@ -13,7 +14,6 @@ export interface LoginState {
 
 export interface HomeState {
   shotName: string;
-  // contestInfo: Contest;
   title: string;
 }
 
@@ -62,4 +62,20 @@ export interface SimulcastConfig {
   rid: SimulcastRidType;
   scaleResolutionDownBy: number;
   bitrate: number;
+}
+
+export type TrackType = 'video' | 'audio';
+
+export interface GetConfirmReadyReqDTO {
+  shotName: string;
+  tracks: {
+    trackId: string;
+    name: string;
+    type: TrackType;
+  }[]
+}
+
+export interface GetConfirmReadyResDTO {
+  transport: mediasoupClient.types.TransportOptions;
+  routerRtpCapabilities: mediasoupClient.types.RtpCapabilities;
 }

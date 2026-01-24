@@ -3,11 +3,11 @@ import { Vue, Options } from 'vue-class-component';
 import { Preferences } from '@capacitor/preferences';
 import { HomePageIndexEnum, HomeState, GetContestInfoResDTO } from '@/typings/data';
 import { Inject, Provide, Prop } from 'vue-property-decorator';
-import { ScreenOrientationState } from '@/typings/data';
+import { ScreenOrientationState, GetConfirmReadyReqDTO } from '@/typings/data';
 import MediaDeviceManager from '@/service/media-device-manager';
-import { reactive, toRaw } from 'vue';
 import { Resolution, SimulcastConfig } from '@/typings/data';
-import { Contest } from '@/typings/srk';
+import WebRTCManager from '@/service/webrtc-manager';
+import SocketManager from '@/service/socket-manager';
 
 import { Button, Tabbar, TabbarItem, Popup, Overlay, Loading } from 'vant';
 import { User, Home, Settings } from 'lucide-vue-next';
@@ -37,13 +37,12 @@ export default class HomeView extends Vue {
   currentPageIndex: HomePageIndexEnum = HomePageIndexEnum.HOME;
   @Inject()
   screenOrientation!: ScreenOrientationState;
-  @Provide({ reactive: true})
-  isReady: boolean = false;
   @Provide({ reactive: true })
-  homeState: HomeState = {
-    shotName: '',
-    title: '',
-  };
+  isReady: boolean = false;
+  @Inject()
+  homeState!: HomeState;
+  @Inject() webrtcManager!: WebRTCManager;
+  @Inject() socketManager!: SocketManager;
 
   /**
    * 媒体设备管理状态
@@ -67,6 +66,33 @@ export default class HomeView extends Vue {
   @Provide()
   async changeReadyState() {
     this.isReady = !this.isReady;
+    if (this.isReady) {
+      console.log(this.stream.getTracks());
+      let videoTrack = this.stream.getVideoTracks()[0].clone();
+      let defaultTrack = {
+        trackId: 'camera_main',
+        name: videoTrack.label,
+        type: 'video' as 'video' | 'audio',
+      };
+
+      console.log('Sending confirmReady with track:', defaultTrack);
+
+      const { transport, routerRtpCapabilities } = await this.socketManager.handleConfirmReady({
+        shotName: this.homeState.shotName,
+        tracks: [defaultTrack],
+      });
+
+      console.log('Received transport and router RTP capabilities:', transport, routerRtpCapabilities);
+
+      // let tracks = this.stream?.getVideoTracks();
+      // const res = this.socketManager.handleConfirmReady({
+      //   shotName: this.homeState.shotName,
+      // })
+    } else {
+      // todo
+      // 取消就绪状态，并且清理 tranport produce 等信息
+      await this.socketManager.handleCancelReady();
+    }
   }
   /**
    * 设备设置状态 & 方法
@@ -109,33 +135,23 @@ export default class HomeView extends Vue {
       {
         rid: 'origin',
         scaleResolutionDownBy: 1.0,
-        bitrate: this.settings.width * this.settings.height * this.settings.frameRate * 0.000078125,
+        bitrate: this.calulateBitrate(this.settings.width, this.settings.height, this.settings.frameRate, 1.0),
       },
       {
         rid: 'low',
         scaleResolutionDownBy: 4.0,
-        bitrate:
-          (((this.settings.width / 4) * this.settings.height) / 4) *
-          this.settings.frameRate *
-          0.000078125,
+        bitrate: this.calulateBitrate(this.settings.width, this.settings.height, this.settings.frameRate, 4.0),
       },
     ];
   }
 
+  private calulateBitrate(width: number, height: number, frameRate: number, scaleResolutionDownBy: number): number {
+    const scaledWidth = width / scaleResolutionDownBy;
+    const scaledHeight = height / scaleResolutionDownBy;
+    return scaledWidth * scaledHeight * frameRate * 0.000078125 * 1000;
+  }
+
   async mounted() {
-    const localState = await Preferences.get({ key: 'loginState' }).then((res) =>
-      JSON.parse(res.value || '{}'),
-    );
-    console.log('Retrieved local login state:', localState);
-    if (!localState.shotName || !localState.contest) {
-      console.log('No valid login state found, redirecting to login page.');
-      this.$router.push('/login');
-      return;
-    }
-    this.homeState = {
-      shotName: localState.shotName || 'Unknown User',
-      title: localState.contest.title || 'Unknown Contest',
-    };
     try {
       this.showOverlay = true;
       console.log('Initializing media devices...');

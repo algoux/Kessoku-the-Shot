@@ -32,14 +32,6 @@ export default class MediaDeviceManager {
     this.currentDeviceId = this.devices[0].deviceId;
   }
 
-  // private getBestResolution(capabilities: MediaTrackCapabilities): Resolution {
-  //   return (
-  //     this.PRE_SET_RESOLUTION_LIST.find(
-  //       (r) => r.width <= capabilities.width.max && r.height <= capabilities.height.max,
-  //     )
-  //   );
-  // }
-
   genResolutionList(settings: MediaTrackSettings) {
     const aspectRatio = settings.aspectRatio;
     this.resolutionList = this.PRESET_HEIGHT_LIST.map((height) => ({
@@ -137,6 +129,7 @@ export default class MediaDeviceManager {
 
   private async updateDeviceList() {
     const allDevices = await navigator.mediaDevices.enumerateDevices();
+    console.log('All media devices:', allDevices);
     this.devices = allDevices.filter((d) => d.kind === 'videoinput');
   }
 
