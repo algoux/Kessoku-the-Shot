@@ -86,7 +86,7 @@ export interface GetConfirmReadyResDTO {
   routerRtpCapabilities: RtpCapabilities;
 }
 
-export interface RequestBroadcasterDTO {
+export interface RequestStartBroadcastDTO {
   trackIds: string[];
 }
 

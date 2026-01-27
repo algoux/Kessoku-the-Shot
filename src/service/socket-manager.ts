@@ -7,6 +7,7 @@ import {
   OnProduceReqDTO,
   OnProduceResDTO,
   OnStopBroadcastReqDTO,
+  RequestStartBroadcastDTO
 } from '@/typings/data';
 import { DtlsParameters } from 'mediasoup-client/types';
 
@@ -16,6 +17,7 @@ export default class SocketManager {
   private onConnectErrorCallback?: (error: Error) => void;
   private cleanUpMediatransport: Function;
   private closeProducers: Function;
+  private startBroadcaster: (trackId: string) => Promise<void>;
 
   private constructor(alias: string, shotToken: string, onConnectError?: (error: Error) => void) {
     this.onConnectErrorCallback = onConnectError;
@@ -48,6 +50,10 @@ export default class SocketManager {
     this.socket.on('disconnect', (reason) => {
       this.cleanUpMediatransport();
     });
+
+    this.socket.on('requestStartBroadcast', (data: RequestStartBroadcastDTO) => {
+      this.handleRequestStartBroadcast(data.trackIds);
+    })
 
     this.socket.on('requestStopBroadcast', () => {
       this.closeProducers();
@@ -88,9 +94,10 @@ export default class SocketManager {
     return res.data;
   }
 
-  setupCleanUpEventsFunctions(cleanUpMediatransport: Function, closeProducers: Function) {
+  setupEventsListenerFunctions(cleanUpMediatransport: Function, closeProducers: Function, startBroadcaster: (trackId: string) => Promise<void>) {
     this.cleanUpMediatransport = cleanUpMediatransport;
     this.closeProducers = closeProducers;
+    this.startBroadcaster = startBroadcaster;
   }
 
   public async handleCancelReady() {
@@ -103,7 +110,11 @@ export default class SocketManager {
     await this.socket.emitWithAck('completeConnectTransport', { dtlsParameters });
   }
 
-  public async handleRequestStartBroadcast() {}
+  public async handleRequestStartBroadcast(trackIds: string[]) {
+    // 先默认只推送 camera_main
+    const trackId = trackIds.find(id => id === 'camera_main');
+    await this.startBroadcaster(trackId);
+  }
 
   async handleProduce(data: OnProduceReqDTO): Promise<OnProduceResDTO> {
     const res = await this.socket.emitWithAck('produce', data);

@@ -14,6 +14,8 @@ export default class WebRTCManager {
   private device: Device;
   private sendTransport: Transport;
   private producers: Map<string, Producer[]>;
+  private trackIdtoProducer: Map<string, Producer>;
+
   constructor(
     private readonly signal: {
       connectTransport: (dtlsParameters: DtlsParameters) => Promise<void>;
@@ -56,14 +58,15 @@ export default class WebRTCManager {
     );
   }
 
-  async produce(track: MediaStreamTrack, options?: ProducerOptions) {
+  async startBroadcaster(trackId:string, track: MediaStreamTrack, options?: ProducerOptions) {
+    if (this.trackIdtoProducer.has(trackId)) return;
     const producer = await this.sendTransport.produce({
       track,
       ...options,
     });
     if (!this.producers.has(track.kind)) this.producers.set(track.kind, []);
     this.producers.get(track.kind)!.push(producer);
-    return producer;
+    this.trackIdtoProducer.set(trackId, producer);
   }
 
   closeProducers() {
@@ -80,10 +83,10 @@ export default class WebRTCManager {
     }
   }
 
-  getCleanUpFunctions() {
+  getEventListenerFunctions() {
     return {
       closeProducers: this.closeProducers.bind(this),
       cleanUpMediatransport: this.closeSendTransport.bind(this),
-    }
+    };
   }
 }

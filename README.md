@@ -32,7 +32,7 @@ pnpm run init
 
 启动 vite 服务器
 ```bash
-pnpm dev:web
+pnpm dev
 ```
 
 浏览器访问 <http://localhost:5173>，并打开 Dev Tools 预览移动端设备。

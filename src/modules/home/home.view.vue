@@ -84,12 +84,17 @@ export default class HomeView extends Vue {
       });
       await this.webrtcManager.loadMediasoupClientDevice(routerRtpCapabilities);
       await this.webrtcManager.createSendTransport(transport);
-      const { cleanUpMediatransport, closeProducers } = this.webrtcManager.getCleanUpFunctions();
-      this.socketManager.setupCleanUpEventsFunctions(cleanUpMediatransport, closeProducers);
+      const { cleanUpMediatransport, closeProducers } =
+        this.webrtcManager.getEventListenerFunctions();
+
+      this.socketManager.setupEventsListenerFunctions(cleanUpMediatransport, closeProducers, (trackId: string) =>
+        this.webrtcManager.startBroadcaster(trackId, videoTrack),
+      );
     } else {
       await this.socketManager.handleCancelReady();
     }
   }
+
   /**
    * 设备设置状态 & 方法
    */
