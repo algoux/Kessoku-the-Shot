@@ -71,7 +71,6 @@ export default class HomeView extends Vue {
   async changeReadyState() {
     this.isReady = !this.isReady;
     if (this.isReady) {
-      console.log(this.stream.getTracks());
       let videoTrack = this.stream.getVideoTracks()[0].clone();
       let defaultTrack = {
         trackId: 'camera_main',
@@ -79,30 +78,15 @@ export default class HomeView extends Vue {
         type: 'video' as 'video' | 'audio',
       };
 
-      console.log('Sending confirmReady with track:', defaultTrack);
-
       const { transport, routerRtpCapabilities } = await this.socketManager.handleConfirmReady({
         shotName: this.homeState.shotName,
         tracks: [defaultTrack],
       });
-
-      console.log(
-        'Received transport and router RTP capabilities:',
-        transport,
-        routerRtpCapabilities,
-      );
       await this.webrtcManager.loadMediasoupClientDevice(routerRtpCapabilities);
       await this.webrtcManager.createSendTransport(transport);
-
-
-
-      // let tracks = this.stream?.getVideoTracks();
-      // const res = this.socketManager.handleConfirmReady({
-      //   shotName: this.homeState.shotName,
-      // })
+      const { cleanUpMediatransport, closeProducers } = this.webrtcManager.getCleanUpFunctions();
+      this.socketManager.setupCleanUpEventsFunctions(cleanUpMediatransport, closeProducers);
     } else {
-      // todo
-      // 取消就绪状态，并且清理 tranport produce 等信息
       await this.socketManager.handleCancelReady();
     }
   }
@@ -186,23 +170,20 @@ export default class HomeView extends Vue {
       this.loadCameraSuccess = true;
     } catch (error) {
       console.error('Error initializing media devices:', error);
+      this.loadCameraSuccess = false;
     } finally {
       this.showOverlay = false;
     }
   }
 
   private async initializeMediaDevices() {
-    try {
-      await this.mediaDeviceManager.init();
-      this.availableCameras = this.mediaDeviceManager.getDevices();
-      this.currentDevice = this.mediaDeviceManager.getCurrentDevice();
-      this.stream = await this.mediaDeviceManager.start();
-      this.capabilities = this.mediaDeviceManager.getCapabilities();
-      this.settings = this.mediaDeviceManager.getCurrentSettings();
-      this.resolutionList = this.mediaDeviceManager.getResolutionList();
-    } catch (error) {
-      console.log(error);
-    }
+    await this.mediaDeviceManager.init();
+    this.availableCameras = this.mediaDeviceManager.getDevices();
+    this.currentDevice = this.mediaDeviceManager.getCurrentDevice();
+    this.stream = await this.mediaDeviceManager.start();
+    this.capabilities = this.mediaDeviceManager.getCapabilities();
+    this.settings = this.mediaDeviceManager.getCurrentSettings();
+    this.resolutionList = this.mediaDeviceManager.getResolutionList();
   }
 
   @Provide()
@@ -218,6 +199,11 @@ export default class HomeView extends Vue {
 
   showPopup() {
     this.show = true;
+  }
+
+  @Provide()
+  onCameraSwitchError() {
+    this.loadCameraSuccess = false;
   }
 }
 </script>

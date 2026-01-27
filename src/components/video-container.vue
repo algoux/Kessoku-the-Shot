@@ -12,13 +12,11 @@ import { Camera } from 'lucide-vue-next';
 })
 export default class VideoContainer extends Vue {
   videoRef: HTMLVideoElement | null = null;
-
   showOverlay = false;
   @Inject()
   isReady!: boolean;
   @Inject()
   screenOrientation!: ScreenOrientationState;
-
   @Inject()
   stream: MediaStream;
   @Inject()
@@ -27,11 +25,15 @@ export default class VideoContainer extends Vue {
   loadCameraSuccess!: boolean;
   @Inject()
   simulCastConfigs!: SimulcastConfig[];
+  @Inject()
+  onCameraSwitchError!: () => void;
 
   @Watch('stream')
   async onStreamChanged(newStream: MediaStream) {
-    if (newStream) {
+    try {
       await this.updateVideoElement(newStream);
+    } catch (_) {
+      this.onCameraSwitchError();
     }
   }
 
@@ -47,9 +49,7 @@ export default class VideoContainer extends Vue {
   }
 
   async mounted() {
-
-    // const simulcastConfigs = generateSimulcastConfigs(this.settings.width, this.settings.height, this.settings.frameRate);
-    // console.log(simulcastConfigs);
+    console.log(this.loadCameraSuccess);
   }
 }
 </script>
@@ -57,14 +57,7 @@ export default class VideoContainer extends Vue {
 <template>
   <div class="video-wrapper">
     <div class="video-container" :class="screenOrientation.isPortrait ? 'portrait' : 'landscape'">
-      <video
-        ref="videoRef"
-        autoplay
-        playsinline
-        muted
-        id="localVideo"
-        v-show="loadCameraSuccess"
-      ></video>
+      <video ref="videoRef" autoplay playsinline muted id="localVideo" v-show="loadCameraSuccess" />
       <div class="camera-icon" v-if="!loadCameraSuccess">
         <Camera size="48" />
       </div>

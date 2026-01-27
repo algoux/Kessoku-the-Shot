@@ -23,7 +23,7 @@ export default class MediaDeviceManager {
 
   /** 初始化并选择默认摄像头 */
   async init() {
-    await this.updateDeviceList();
+    await this.updateCameraList();
 
     if (this.devices.length === 0) {
       throw new Error('未检测到摄像头设备');
@@ -76,6 +76,7 @@ export default class MediaDeviceManager {
 
   /** 切换摄像头 */
   async switchCamera(deviceId: string) {
+    console.log('Switching camera to deviceId:', deviceId);
     if (deviceId === this.currentDeviceId) return;
 
     this.currentDeviceId = deviceId;
@@ -116,7 +117,7 @@ export default class MediaDeviceManager {
 
   /** 更新设备列表 */
   private handleDeviceChange = async () => {
-    await this.updateDeviceList();
+    await this.updateCameraList();
 
     // 当前设备被拔出，自动切换到第一个
     if (this.currentDeviceId && !this.devices.some((d) => d.deviceId === this.currentDeviceId)) {
@@ -124,10 +125,12 @@ export default class MediaDeviceManager {
       if (this.currentDeviceId) {
         await this.switchCamera(this.currentDeviceId);
       }
+    } else {
+      throw new Error('未检测到摄像头设备');
     }
   };
 
-  private async updateDeviceList() {
+  private async updateCameraList() {
     const allDevices = await navigator.mediaDevices.enumerateDevices();
     console.log('All media devices:', allDevices);
     this.devices = allDevices.filter((d) => d.kind === 'videoinput');

@@ -73,7 +73,7 @@ export default class App extends Vue {
         title: localState.contest.title,
       };
       this.webrtcManager = new WebRTCManager({
-        connectTransport: this.socketManager.handleCcompleteConnectTransport.bind(this.socketManager),
+        connectTransport: this.socketManager.handleCompleteConnectTransport.bind(this.socketManager),
         produce: this.socketManager.handleProduce.bind(this.socketManager),
       });
       this.$router.push('/');

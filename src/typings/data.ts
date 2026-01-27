@@ -105,3 +105,7 @@ export interface OnProduceResDTO {
   type: Producer;
   appData: any;
 }
+
+export interface OnStopBroadcastReqDTO {
+  trackIds: string[];
+}

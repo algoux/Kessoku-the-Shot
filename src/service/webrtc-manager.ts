@@ -6,15 +6,17 @@ import {
   Producer,
   TransportOptions,
   RtpCapabilities,
+  DtlsParameters,
 } from 'mediasoup-client/types';
-import { OnProduceReqDTO, OnProduceResDTO } from '@/typings/data';
+import { OnProduceReqDTO, OnProduceResDTO, TrackType } from '@/typings/data';
+
 export default class WebRTCManager {
   private device: Device;
   private sendTransport: Transport;
   private producers: Map<string, Producer[]>;
   constructor(
     private readonly signal: {
-      connectTransport: (dtlsParameters: any) => Promise<void>;
+      connectTransport: (dtlsParameters: DtlsParameters) => Promise<void>;
       produce: (params: OnProduceReqDTO) => Promise<OnProduceResDTO>;
     },
   ) {}
@@ -30,7 +32,7 @@ export default class WebRTCManager {
 
     this.sendTransport.on('connect', async ({ dtlsParameters }, callback, errback) => {
       try {
-        await this.signal.connectTransport({ dtlsParameters });
+        await this.signal.connectTransport(dtlsParameters);
         callback();
       } catch (error) {
         errback(error);
@@ -43,7 +45,7 @@ export default class WebRTCManager {
         try {
           const { producerId } = await this.signal.produce({
             trackId: 'camera_main',
-            kind,
+            kind: kind as TrackType,
             rtpParameters,
           });
           callback({ id: producerId });
@@ -55,24 +57,33 @@ export default class WebRTCManager {
   }
 
   async produce(track: MediaStreamTrack, options?: ProducerOptions) {
-    if (!this.sendTransport) {
-      throw new Error('Send transport is not created');
-    }
-
     const producer = await this.sendTransport.produce({
       track,
       ...options,
     });
-
-    if (!this.producers.has(track.kind)) {
-      this.producers.set(track.kind, []);
-    }
+    if (!this.producers.has(track.kind)) this.producers.set(track.kind, []);
     this.producers.get(track.kind)!.push(producer);
-
     return producer;
   }
 
-  async closeProducers() {}
+  closeProducers() {
+    for (const producerList of this.producers.values()) {
+      for (const producer of producerList) {
+        producer.close();
+      }
+    }
+  }
 
-  async closeSendTransport() {}
+  closeSendTransport() {
+    if (this.sendTransport) {
+      this.sendTransport.close();
+    }
+  }
+
+  getCleanUpFunctions() {
+    return {
+      closeProducers: this.closeProducers.bind(this),
+      cleanUpMediatransport: this.closeSendTransport.bind(this),
+    }
+  }
 }

@@ -6,12 +6,16 @@ import {
   GetConfirmReadyResDTO,
   OnProduceReqDTO,
   OnProduceResDTO,
+  OnStopBroadcastReqDTO,
 } from '@/typings/data';
+import { DtlsParameters } from 'mediasoup-client/types';
 
 export default class SocketManager {
   private static instance: SocketManager | null = null;
   private socket: Socket;
   private onConnectErrorCallback?: (error: Error) => void;
+  private cleanUpMediatransport: Function;
+  private closeProducers: Function;
 
   private constructor(alias: string, shotToken: string, onConnectError?: (error: Error) => void) {
     this.onConnectErrorCallback = onConnectError;
@@ -41,10 +45,13 @@ export default class SocketManager {
       this.onConnectErrorCallback(err);
     });
 
-    // todo
-    // this.socket.on('disconnect', () => {
-    //   this.socket.emit('cancelReady')
-    // })
+    this.socket.on('disconnect', (reason) => {
+      this.cleanUpMediatransport();
+    });
+
+    this.socket.on('requestStopBroadcast', () => {
+      this.closeProducers();
+    })
   }
 
   public static getInstance(
@@ -81,7 +88,18 @@ export default class SocketManager {
     return res.data;
   }
 
-  public async handleCcompleteConnectTransport({ dtlsParameters }): Promise<void> {
+  setupCleanUpEventsFunctions(cleanUpMediatransport: Function, closeProducers: Function) {
+    this.cleanUpMediatransport = cleanUpMediatransport;
+    this.closeProducers = closeProducers;
+  }
+
+  public async handleCancelReady() {
+    await this.socket.emitWithAck('cancelReady');
+    this.cleanUpMediatransport();
+  }
+
+  public async handleCompleteConnectTransport(dtlsParameters: DtlsParameters): Promise<void> {
+    console.log('Completing transport connection with DTLS parameters:', dtlsParameters);
     await this.socket.emitWithAck('completeConnectTransport', { dtlsParameters });
   }
 
@@ -90,9 +108,5 @@ export default class SocketManager {
   async handleProduce(data: OnProduceReqDTO): Promise<OnProduceResDTO> {
     const res = await this.socket.emitWithAck('produce', data);
     return res.data;
-  }
-
-  public async handleCancelReady() {
-    await this.socket.emitWithAck('cancelReady');
   }
 }
