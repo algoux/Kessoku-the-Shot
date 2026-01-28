@@ -103,9 +103,9 @@ export default class HomeNavBar extends Vue {
           </template>
           <span> {{ isReady ? 'Cancel Ready' : 'Ready' }} </span>
         </Button>
-        <span class="contest-info" :class="isReady ? 'ready-state' : ''">{{
-          homeState.title
-        }}</span>
+        <span class="contest-info" :class="isReady ? 'ready-state' : ''">
+          {{ homeState.title }}
+        </span>
       </div>
     </template>
   </NavBar>
@@ -119,7 +119,7 @@ export default class HomeNavBar extends Vue {
 .contest-info {
   position: absolute;
   bottom: 0;
-  font-size: 0.7rem;
+  font-size: var(--desc-font-size);
 }
 
 .home-header {
@@ -153,7 +153,7 @@ export default class HomeNavBar extends Vue {
       align-items: center;
 
       & .shotName {
-        font-size: 1.2rem;
+        font-size: var(--title-font-size);
       }
 
       &.userinfo-dropdown {

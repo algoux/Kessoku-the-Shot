@@ -57,9 +57,7 @@ export default class App extends Vue {
     const localState = await Preferences.get({ key: 'loginState' }).then((res) =>
       JSON.parse(res.value || '{}'),
     );
-    console.log('Retrieved local login state:', localState);
     if (!localState.shotName || !localState.contest || !localState.alias) {
-      console.log('No valid login state found, redirecting to login page.');
       this.$router.push('/login');
       return;
     } else {
@@ -79,6 +77,7 @@ export default class App extends Vue {
       this.$router.push('/');
     }
   }
+  
   @Provide()
   async login(alias: string, shotName: string, token: string) {
     try {

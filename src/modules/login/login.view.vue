@@ -63,8 +63,8 @@ export default class LoginView extends Vue {
           clearable
           class="text-input"
           label-align="center"
-          size="large"
-          label-width="50"
+          size="small"
+          label-width="45"
         >
           <template #left-icon>
             <Icon>
@@ -79,8 +79,8 @@ export default class LoginView extends Vue {
           clearable
           class="text-input"
           label-align="center"
-          size="large"
-          label-width="50"
+          size="small"
+          label-width="45"
         >
           <template #left-icon>
             <Icon>
@@ -94,10 +94,10 @@ export default class LoginView extends Vue {
           label="token"
           placeholder="shot token"
           label-align="center"
-          label-width="50"
+          label-width="45"
           clearable
           class="text-input"
-          size="large"
+          size="small"
         >
           <template #left-icon>
             <Icon>
@@ -121,6 +121,7 @@ export default class LoginView extends Vue {
       <Button
         round
         type="primary"
+        size="small"
         block
         native-type="submit"
         :disabled="!canLogin"
@@ -135,6 +136,17 @@ export default class LoginView extends Vue {
 </template>
 
 <style scoped lang="less">
+:deep(.van-badge__wrapper, .van-icon, .van-icon-undefined) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+:deep(.van-field__left-icon) {
+  display: flex;
+  justify-content: center;
+  align-content: center;
+}
 .login-container {
   height: 100dvh;
   width: 100vw;
@@ -146,13 +158,13 @@ export default class LoginView extends Vue {
   position: relative;
 
   & .login-title {
-    font-size: 1.5rem;
+    font-size: var(--title-font-size);
     font-weight: bold;
   }
 
   & .copyright {
     position: absolute;
-    font-size: 0.6rem;
+    font-size: var(--desc-font-size);
     color: #888;
   }
 }
@@ -187,6 +199,6 @@ export default class LoginView extends Vue {
 }
 
 .text-input {
-  font-size: 1rem;
+  font-size: var(--text-font-size);
 }
 </style>

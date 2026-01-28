@@ -13,8 +13,8 @@ import { OnProduceReqDTO, OnProduceResDTO, TrackType } from '@/typings/data';
 export default class WebRTCManager {
   private device: Device;
   private sendTransport: Transport;
-  private producers: Map<string, Producer[]>;
-  private trackIdtoProducer: Map<string, Producer>;
+  private producers: Map<string, Producer[]> = new Map();
+  private trackIdtoProducer: Map<string, Producer> = new Map();
 
   constructor(
     private readonly signal: {

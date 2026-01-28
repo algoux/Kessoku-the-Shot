@@ -1,5 +1,5 @@
-<img src="./resources/icon.png" style="height: 48px" />
 <div style="width: 100vw; height: 60px;  display: flex; justify-content: start; align-items: center; gap: 10px">
+    <img src="./public/icon.png" style="height: 48px" />
     <img src="./public/Vue@128.png" style="height: 48px" />
     <img src="./public/capacitor@128.png" style="height: 48px" />
     <img src="./public/typescript@128.png" style="height: 48px" />

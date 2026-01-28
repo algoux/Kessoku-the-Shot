@@ -146,7 +146,7 @@ export default class GlobalSettings extends Vue {
     margin-bottom: 1rem;
 
     .title {
-      font-size: 1.5rem;
+      font-size: var(--title-font-size);
       font-weight: bold;
       margin: 0;
     }
@@ -191,7 +191,7 @@ export default class GlobalSettings extends Vue {
     gap: 0.5rem;
     padding: 0.5rem 1rem;
     border-radius: 8px;
-    font-size: 0.9rem;
+    font-size: var(--text-font-size);
     color: gray;
   }
 }
