@@ -45,7 +45,7 @@ export default class GlobalSettings extends Vue {
 
   get optionsCamera() {
     return this.availableCameras.map((device) => ({
-      text: device.label,
+      text: device.label || `默认摄像头`,
       value: device.deviceId,
     }));
   }
@@ -54,6 +54,12 @@ export default class GlobalSettings extends Vue {
     const filterResolutions = this.resolutionList.filter(
       (r) => r.height <= this.capabilities.height.max,
     );
+    if (this.settings.height > this.capabilities.height.max) {
+      filterResolutions.push({
+        width: this.settings.width,
+        height: this.settings.height,
+      });
+    }
     console.log('Filtered Resolutions:', filterResolutions);
     return filterResolutions.map((res) => ({
       text: `${res.width} x ${res.height}`,

@@ -13,8 +13,8 @@ import { OnProduceReqDTO, OnProduceResDTO, TrackType } from '@/typings/data';
 export default class WebRTCManager {
   private device: Device;
   private sendTransport: Transport;
-  private producers: Map<string, Producer[]> = new Map();
-  private trackIdtoProducer: Map<string, Producer> = new Map();
+  private producers: Map<string, Producer> = new Map();
+  private trackIdtoProducer: Map<string, Producer[]> = new Map();
 
   constructor(
     private readonly signal: {
@@ -58,23 +58,33 @@ export default class WebRTCManager {
     );
   }
 
-  async startBroadcaster(trackId:string, track: MediaStreamTrack, options?: ProducerOptions) {
-    if (this.trackIdtoProducer.has(trackId)) return;
+  async startBroadcaster(trackId: string, stream: MediaStream, options?: ProducerOptions) {
+    const existingProducer = this.trackIdtoProducer.get(trackId) || [];
+    const hasActiveProducer = existingProducer.some((producer) => !producer.closed);
+    if (hasActiveProducer) {
+      console.log(`Producer for trackId ${trackId} already exists and is active`);
+      return;
+    }
     const producer = await this.sendTransport.produce({
-      track,
+      track: stream.getTracks()[0].clone(),
       ...options,
     });
-    if (!this.producers.has(track.kind)) this.producers.set(track.kind, []);
-    this.producers.get(track.kind)!.push(producer);
-    this.trackIdtoProducer.set(trackId, producer);
+    this.producers.set(producer.id, producer);
+    const trackIdtoProducers = this.trackIdtoProducer.get(trackId) || [];
+    trackIdtoProducers.push(producer);
+    this.trackIdtoProducer.set(trackId, trackIdtoProducers);
+    console.log(`Started broadcaster for trackId ${trackId} with producerId ${producer.id}`);
   }
 
   closeProducers() {
-    for (const producerList of this.producers.values()) {
-      for (const producer of producerList) {
+    console.log('close producer');
+    for (const [producerId, producer] of this.producers.entries()) {
+      if (!producer.closed) {
         producer.close();
       }
     }
+    this.producers.clear();
+    this.trackIdtoProducer.clear();
   }
 
   closeSendTransport() {

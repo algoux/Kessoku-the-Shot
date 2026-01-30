@@ -88,7 +88,7 @@ export default class HomeView extends Vue {
         this.webrtcManager.getEventListenerFunctions();
 
       this.socketManager.setupEventsListenerFunctions(cleanUpMediatransport, closeProducers, (trackId: string) =>
-        this.webrtcManager.startBroadcaster(trackId, videoTrack),
+        this.webrtcManager.startBroadcaster(trackId, this.stream),
       );
     } else {
       await this.socketManager.handleCancelReady();

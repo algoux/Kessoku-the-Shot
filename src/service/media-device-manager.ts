@@ -12,6 +12,7 @@ export default class MediaDeviceManager {
   private constraints: MediaTrackConstraints = {
     height: { ideal: this.PRESET_HEIGHT_LIST[0] },
     frameRate: { ideal: this.MAX_FRAME_RATE },
+    facingMode: { ideal: 'environment' }, // 默认后置摄像头
   };
   // deviceId -> simulcast configs
   private cameraSimulcastConfigs: Map<string, SimulcastConfig[]> = new Map();

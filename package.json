@@ -14,7 +14,6 @@
     "permission": "node scripts/add-permissions.js",
     "start:ios": "NODE_ENV=production pnpm build && npx cap sync ios && npx cap run ios",
     "start:android": "NODE_ENV=production pnpm build && npx cap sync android && npx cap run android",
-    "build:apk": "pnpm build && npx cap sync android && cd android && ./gradlew assembleDebug && cd ..",
     "release:apk": "pnpm build && npx cap sync android && cd android && ./gradlew assembleRelease && cd ..",
     "build:bundle": "pnpm build && npx cap sync android && cd android && ./gradlew bundleRelease && cd ..",
     "icon": "npx @capacitor/assets generate"

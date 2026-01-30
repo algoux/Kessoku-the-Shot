@@ -55,8 +55,10 @@ export default class SocketManager {
       this.handleRequestStartBroadcast(data.trackIds);
     })
 
-    this.socket.on('requestStopBroadcast', () => {
+    this.socket.on('requestStopBroadcast', (data, callback) => {
+      console.log('resolve requestStopBroadcast')
       this.closeProducers();
+      callback(); // 发送空 callback 
     })
   }
 

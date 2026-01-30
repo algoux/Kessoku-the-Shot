@@ -71,17 +71,23 @@ export default class App extends Vue {
         title: localState.contest.title,
       };
       this.webrtcManager = new WebRTCManager({
-        connectTransport: this.socketManager.handleCompleteConnectTransport.bind(this.socketManager),
+        connectTransport: this.socketManager.handleCompleteConnectTransport.bind(
+          this.socketManager,
+        ),
         produce: this.socketManager.handleProduce.bind(this.socketManager),
       });
       this.$router.push('/');
     }
   }
-  
+
   @Provide()
   async login(alias: string, shotName: string, token: string) {
     try {
-      this.socketManager = SocketManager.getInstance(alias, token, this.handleConnectError.bind(this));
+      this.socketManager = SocketManager.getInstance(
+        alias,
+        token,
+        this.handleConnectError.bind(this),
+      );
       const contestInfo = await this.socketManager.getContestInfo();
       console.log('Contest Info:', contestInfo);
       await Preferences.set({
@@ -129,6 +135,8 @@ export default class App extends Vue {
 
 <template>
   <ConfigProvider :theme="theme" :theme-vars="themeVars">
-    <router-view />
+    <router-view v-slot="{ Component }">
+      <component :is="Component" />
+    </router-view>
   </ConfigProvider>
 </template>
