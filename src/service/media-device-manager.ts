@@ -1,4 +1,5 @@
 import { Resolution, SimulcastConfig } from '@/typings/data';
+import { toRaw } from 'vue';
 
 export default class MediaDeviceManager {
   protected MAX_FRAME_RATE: number = 60;
@@ -10,9 +11,8 @@ export default class MediaDeviceManager {
   private capabilities: MediaTrackCapabilities | null = null;
   private settings: MediaTrackSettings | null = null;
   private constraints: MediaTrackConstraints = {
-    height: { ideal: this.PRESET_HEIGHT_LIST[0] },
+    height: { min: 720, ideal: this.PRESET_HEIGHT_LIST[0] },
     frameRate: { ideal: this.MAX_FRAME_RATE },
-    facingMode: { ideal: 'environment' }, // 默认后置摄像头
   };
   // deviceId -> simulcast configs
   private cameraSimulcastConfigs: Map<string, SimulcastConfig[]> = new Map();
@@ -24,6 +24,7 @@ export default class MediaDeviceManager {
 
   /** 初始化并选择默认摄像头 */
   async init() {
+    await navigator.mediaDevices.getUserMedia({ video: this.constraints, audio: true });
     await this.updateCameraList();
 
     if (this.devices.length === 0) {
@@ -35,10 +36,21 @@ export default class MediaDeviceManager {
 
   genResolutionList(settings: MediaTrackSettings) {
     const aspectRatio = settings.aspectRatio;
-    this.resolutionList = this.PRESET_HEIGHT_LIST.map((height) => ({
-      width: Math.round(aspectRatio * height),
-      height: height,
-    }));
+    let resolutionList = this.PRESET_HEIGHT_LIST.map((height) => {
+      if (height <= this.settings.height) {
+        return {
+          width: Math.round(height * aspectRatio),
+          height: height,
+        };
+      }
+    }).filter(Boolean) as Resolution[];
+    if (
+      resolutionList[0].height !== this.settings.height &&
+      resolutionList[0].width !== this.settings.width
+    ) {
+      resolutionList.unshift({ width: settings.width, height: settings.height });
+    }
+    this.resolutionList = resolutionList;
   }
 
   getResolutionList(): Resolution[] {

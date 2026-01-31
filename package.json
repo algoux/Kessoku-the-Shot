@@ -16,7 +16,8 @@
     "start:android": "NODE_ENV=production pnpm build && npx cap sync android && npx cap run android",
     "release:apk": "pnpm build && npx cap sync android && cd android && ./gradlew assembleRelease && cd ..",
     "build:bundle": "pnpm build && npx cap sync android && cd android && ./gradlew bundleRelease && cd ..",
-    "icon": "npx @capacitor/assets generate"
+    "icon": "npx @capacitor/assets generate",
+    "open": "cd /Users/atrior/GitHub/Kessoku-the-Shot/android/app/build/outputs/apk/release && open ."
   },
   "dependencies": {
     "uuid": "^8.3.2"

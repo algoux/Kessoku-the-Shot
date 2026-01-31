@@ -8,6 +8,7 @@ import SocketManager from './service/socket-manager';
 import { Preferences } from '@capacitor/preferences';
 import { HomeState } from './typings/data';
 import WebRTCManager from './service/webrtc-manager';
+import { v4 as uuidv4 } from 'uuid';
 
 @Options({
   components: {
@@ -27,7 +28,7 @@ export default class App extends Vue {
   webrtcManager: WebRTCManager;
 
   themeVars = {
-    // navBarHeight: '0rem',
+    navBarHeight: '5rem',
   };
 
   @Provide({ reactive: true })
@@ -54,16 +55,18 @@ export default class App extends Vue {
 
   async mounted() {
     await this.initTheme();
-    const localState = await Preferences.get({ key: 'loginState' }).then((res) =>
-      JSON.parse(res.value || '{}'),
+    const localState = await Preferences.get({ key: 'loginState' }).then(
+      (res) => JSON.parse(res.value) || undefined,
     );
-    if (!localState.shotName || !localState.contest || !localState.alias) {
+    console.log('Local State:', localState);
+    if (!localState) {
       this.$router.push('/login');
       return;
     } else {
       this.socketManager = SocketManager.getInstance(
         localState.alias,
         localState.shotToken,
+        localState.clientId,
         this.handleConnectError.bind(this),
       );
       this.homeState = {
@@ -83,9 +86,11 @@ export default class App extends Vue {
   @Provide()
   async login(alias: string, shotName: string, token: string) {
     try {
+      let clientId = `s-${uuidv4().substring(0, 18)}`;
       this.socketManager = SocketManager.getInstance(
         alias,
         token,
+        clientId,
         this.handleConnectError.bind(this),
       );
       const contestInfo = await this.socketManager.getContestInfo();
@@ -98,6 +103,7 @@ export default class App extends Vue {
           contest: contestInfo.data.contest,
           serverTimestamp: contestInfo.data.serverTimestamp,
           shotToken: token,
+          clientId: clientId
         }),
       });
       this.homeState = {

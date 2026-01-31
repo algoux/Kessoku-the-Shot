@@ -42,6 +42,9 @@ export default class GlobalSettings extends Vue {
   onFrameRateChange!: (frameRate: number) => Promise<void>;
   @Inject()
   simulCastConfigs!: SimulcastConfig[];
+  @Inject()
+  loadCameraSuccess!: boolean;
+  maxFrameRate: number = 60;
 
   get optionsCamera() {
     return this.availableCameras.map((device) => ({
@@ -51,25 +54,18 @@ export default class GlobalSettings extends Vue {
   }
 
   get optionsResolution() {
-    const filterResolutions = this.resolutionList.filter(
-      (r) => r.height <= this.capabilities.height.max,
-    );
-    if (this.settings.height > this.capabilities.height.max) {
-      filterResolutions.push({
-        width: this.settings.width,
-        height: this.settings.height,
-      });
+    if (!this.capabilities || !this.resolutionList) {
+      return [];
     }
-    console.log('Filtered Resolutions:', filterResolutions);
-    return filterResolutions.map((res) => ({
-      text: `${res.width} x ${res.height}`,
+    return this.resolutionList.map((res, idx) => ({
+      text: `${res.width} x ${res.height}${idx === 0 ? ' (原画)' : ''}`,
       value: res.height,
     }));
   }
 
   get optionsFramerate() {
     const filterFrameRates = this.PRE_SET_FRAME_RATE_LIST.filter(
-      (rate) => rate <= this.capabilities.frameRate.max,
+      (rate) => rate <= this.maxFrameRate,
     );
     return filterFrameRates.map((rate) => ({
       text: `${rate} fps`,
@@ -82,6 +78,9 @@ export default class GlobalSettings extends Vue {
   }
 
   mounted(): void {
+    if (this.settings) {
+      this.maxFrameRate = this.settings.frameRate
+    }
     console.log(this.optionsResolution);
   }
 }
@@ -97,7 +96,7 @@ export default class GlobalSettings extends Vue {
     </div>
     <div class="form-container">
       <!-- 设备设置 -->
-      <Form class="form">
+      <Form class="form" v-if="loadCameraSuccess">
         <p class="tip">设备设置</p>
         <CellGroup v-if="availableCameras.length > 0">
           <DropdownMenu
@@ -125,7 +124,9 @@ export default class GlobalSettings extends Vue {
           </DropdownMenu>
         </CellGroup>
         <div class="bitrate-info" v-if="availableCameras.length">
-          <span class="bitrate-label">推流码率: {{ parseBitrate(simulCastConfigs[0].bitrate) }} Mbps</span>
+          <span class="bitrate-label"
+            >推流码率: {{ parseBitrate(simulCastConfigs[0].bitrate) }} Mbps</span
+          >
         </div>
         <div v-else class="bitrate-info">摄像头检测失败</div>
       </Form>

@@ -61,7 +61,7 @@ export default class HomeNavBar extends Vue {
 </script>
 
 <template>
-  <NavBar class="home-header" :safe-area-inset-top="screenOrientation.isPortrait">
+  <NavBar class="home-header" :safe-area-inset-top="true">
     <template #title>
       <div class="home-header-content">
         <Popover
@@ -103,7 +103,7 @@ export default class HomeNavBar extends Vue {
           </template>
           <span> {{ isReady ? 'Cancel Ready' : 'Ready' }} </span>
         </Button>
-        <span class="contest-info" :class="isReady ? 'ready-state' : ''">
+        <span class="contest-info" v-if="screenOrientation.isPortrait" :class="{ 'ready-state': isReady }">
           {{ homeState.title }}
         </span>
       </div>
@@ -120,6 +120,10 @@ export default class HomeNavBar extends Vue {
   position: absolute;
   bottom: 0;
   font-size: var(--desc-font-size);
+}
+
+.contest-info-landscape {
+  color: #fff;
 }
 
 .home-header {

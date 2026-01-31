@@ -19,7 +19,7 @@ export default class SocketManager {
   private closeProducers: Function;
   private startBroadcaster: (trackId: string) => Promise<void>;
 
-  private constructor(alias: string, shotToken: string, onConnectError?: (error: Error) => void) {
+  private constructor(alias: string, shotToken: string, clientId: string, onConnectError?: (error: Error) => void) {
     this.onConnectErrorCallback = onConnectError;
     console.log(alias, shotToken);
     this.socket = io('https://rl-broadcast-hub.algoux.cn/shot', {
@@ -29,7 +29,7 @@ export default class SocketManager {
         uca: alias,
       },
       auth: {
-        id: `s-${uuidv4().substring(0, 18)}`,
+        id: clientId,
         shotToken: shotToken,
       },
       reconnection: true,
@@ -65,10 +65,11 @@ export default class SocketManager {
   public static getInstance(
     alias: string,
     shotToken: string,
+    clientId: string,
     onConnectError?: (error: Error) => void,
   ) {
     if (!SocketManager.instance) {
-      SocketManager.instance = new SocketManager(alias, shotToken, onConnectError);
+      SocketManager.instance = new SocketManager(alias, shotToken, clientId, onConnectError);
     }
     return SocketManager.instance;
   }

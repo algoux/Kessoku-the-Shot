@@ -28,8 +28,8 @@ export default class LoginView extends Vue {
   logoUrl = logo;
   passwordVisible = false;
   loginState: LoginState = {
-    shotToken: '',
-    alias: '',
+    shotToken: 'rankland_',
+    alias: 'sdutpmc17',
     shotName: '',
   };
 

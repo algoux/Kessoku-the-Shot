@@ -55,19 +55,13 @@ export default class VideoContainer extends Vue {
 </script>
 
 <template>
-  <div class="video-wrapper">
+  <div class="video-wrapper" :class="screenOrientation.isPortrait ? 'video-wrapper-portrait' : ''">
     <div class="video-container" :class="screenOrientation.isPortrait ? 'portrait' : 'landscape'">
       <video ref="videoRef" autoplay playsinline muted id="localVideo" v-show="loadCameraSuccess" />
       <div class="camera-icon" v-if="!loadCameraSuccess">
         <Camera size="48" />
       </div>
-
-      <!-- 设备参数预览（横屏时在video内部） -->
-      <div
-        class="device-info"
-        v-if="settings"
-        :class="screenOrientation.isPortrait ? 'device-info-portrait' : 'device-info-landscape'"
-      >
+      <div class="device-info" :class="screenOrientation.isLandscape ? 'device-info-landscape' : ''" v-if="settings">
         <div class="info-item">
           <span class="info-label">分辨率:</span>
           <span class="info-value">{{ settings.width }}x{{ settings.height }}</span>
@@ -106,6 +100,11 @@ export default class VideoContainer extends Vue {
   align-items: center;
 }
 
+.video-wrapper-portrait {
+  height: 100%;
+  position: relative;
+}
+
 .video-container {
   width: 100%;
   display: flex;
@@ -113,7 +112,6 @@ export default class VideoContainer extends Vue {
   align-items: center;
   flex-direction: column;
   position: relative;
-  // overflow: hidden;
 
   & video {
     width: 100%;
@@ -130,6 +128,13 @@ export default class VideoContainer extends Vue {
   display: flex;
   gap: 20px;
   align-items: center;
+  position: absolute;
+  bottom: 5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+  white-space: nowrap;
+  color: white;
 
   .info-item {
     display: flex;
@@ -140,37 +145,13 @@ export default class VideoContainer extends Vue {
 }
 
 .device-info-landscape {
-  position: absolute;
-  bottom: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 5;
-  white-space: nowrap;
-  color: white;
-
-  .info-item {
-    font-size: 12px;
-  }
-}
-
-.device-info-portrait {
-  width: 95%;
-  background: none;
-  backdrop-filter: none;
-  box-shadow: none;
-  padding: 12px 0;
-  flex-direction: column;
-  gap: 8px;
-  align-items: center;
-
-  .info-item {
-    font-size: 14px;
-  }
+  bottom: 1rem;
 }
 
 .portrait {
-  aspect-ratio: 16 / 9;
-  padding: 0.5rem;
+  // aspect-ratio: 16 / 9;
+  height: 100%;
+  // padding: 0.5rem;
 }
 
 .landscape {

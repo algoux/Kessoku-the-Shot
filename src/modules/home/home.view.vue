@@ -13,7 +13,7 @@ import MediaDeviceManager from '@/service/media-device-manager';
 import WebRTCManager from '@/service/webrtc-manager';
 import SocketManager from '@/service/socket-manager';
 
-import { Button, Tabbar, TabbarItem, Popup, Overlay, Loading } from 'vant';
+import { Button, Tabbar, TabbarItem, Popup, Overlay, Loading, showNotify } from 'vant';
 import { User, Home, Settings } from 'lucide-vue-next';
 import VideoContainer from '@/components/video-container.vue';
 import GlobalSettings from '@/components/global-settings.vue';
@@ -30,6 +30,7 @@ import HomeNavBar from '@/components/home-nav-bar.vue';
     Popup,
     Overlay,
     Loading,
+    showNotify,
     User,
     Home,
     Settings,
@@ -38,7 +39,6 @@ import HomeNavBar from '@/components/home-nav-bar.vue';
 export default class HomeView extends Vue {
   show: boolean = false;
   showOverlay: boolean = false;
-  currentPageIndex: HomePageIndexEnum = HomePageIndexEnum.HOME;
   @Inject()
   screenOrientation!: ScreenOrientationState;
   @Provide({ reactive: true })
@@ -87,8 +87,10 @@ export default class HomeView extends Vue {
       const { cleanUpMediatransport, closeProducers } =
         this.webrtcManager.getEventListenerFunctions();
 
-      this.socketManager.setupEventsListenerFunctions(cleanUpMediatransport, closeProducers, (trackId: string) =>
-        this.webrtcManager.startBroadcaster(trackId, this.stream),
+      this.socketManager.setupEventsListenerFunctions(
+        cleanUpMediatransport,
+        closeProducers,
+        (trackId: string) => this.webrtcManager.startBroadcaster(trackId, this.stream),
       );
     } else {
       await this.socketManager.handleCancelReady();
@@ -113,21 +115,39 @@ export default class HomeView extends Vue {
   @Provide()
   async switchCamera(deviceId: string) {
     await this.mediaDeviceManager.switchCamera(deviceId);
-    this.settings = this.mediaDeviceManager.getCurrentSettings();
     this.currentDevice = this.mediaDeviceManager.getCurrentDevice();
+    this.capabilities = this.mediaDeviceManager.getCapabilities();
+    this.settings = this.mediaDeviceManager.getCurrentSettings();
+    this.resolutionList = this.mediaDeviceManager.getResolutionList();
   }
 
   @Provide()
   async onResolutionChange(height: number) {
-    const width = Math.round(this.settings.aspectRatio * height);
-    await this.mediaDeviceManager.setResolution(width, height);
-    this.settings = this.mediaDeviceManager.getCurrentSettings();
+    try {
+      const width = Math.round(this.settings.aspectRatio * height);
+      await this.mediaDeviceManager.setResolution(width, height);
+      this.settings = this.mediaDeviceManager.getCurrentSettings();
+    } catch (error) {
+      console.error('Error changing resolution:', error);
+      showNotify({
+        type: 'danger',
+        message: '分辨率切换失败',
+      });
+    }
   }
 
   @Provide()
   async onFrameRateChange(frameRate: number) {
-    await this.mediaDeviceManager.setFrameRate(frameRate);
-    this.settings = this.mediaDeviceManager.getCurrentSettings();
+    try {
+      await this.mediaDeviceManager.setFrameRate(frameRate);
+      this.settings = this.mediaDeviceManager.getCurrentSettings();
+    } catch (error) {
+      console.error('Error changing frame rate:', error);
+      showNotify({
+        type: 'danger',
+        message: '帧率切换失败',
+      });
+    }
   }
 
   @Provide({ reactive: true })
@@ -225,22 +245,22 @@ export default class HomeView extends Vue {
     </Popup>
     <HomeNavBar />
     <div class="home-content">
-      <VideoContainer ref="videoContainer" v-if="this.currentPageIndex === 0" />
+      <VideoContainer ref="videoContainer" />
     </div>
-    <footer class="home-footer" v-if="screenOrientation.isPortrait">
-      <Tabbar unactive-color="#7d7e80" active-color="#1989fa">
+    <!-- <footer class="home-footer" v-if="screenOrientation.isPortrait"> -->
+      <Tabbar unactive-color="#7d7e80" active-color="#1989fa" safe-area-inset-bottom v-if="screenOrientation.isPortrait">
         <TabbarItem label="Home">
           <template #icon="props">
-            <Home :stroke-width="1" />
+            <Home :stroke-width="2" />
           </template>
         </TabbarItem>
         <TabbarItem label="Settings" @click="showPopup">
           <template #icon="props">
-            <Settings :stroke-width="1" />
+            <Settings :stroke-width="2" />
           </template>
         </TabbarItem>
       </Tabbar>
-    </footer>
+    <!-- </footer> -->
   </div>
 </template>
 
@@ -258,11 +278,6 @@ export default class HomeView extends Vue {
     display: flex;
     justify-content: center;
     align-items: center;
-  }
-
-  .home-footer {
-    width: 100%;
-    flex-shrink: 0;
   }
 }
 </style>
