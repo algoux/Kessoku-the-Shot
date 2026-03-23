@@ -103,13 +103,19 @@ export default class App extends Vue {
           contest: contestInfo.data.contest,
           serverTimestamp: contestInfo.data.serverTimestamp,
           shotToken: token,
-          clientId: clientId
+          clientId: clientId,
         }),
       });
       this.homeState = {
         shotName: shotName,
         title: String(contestInfo.data.contest.title),
       };
+      this.webrtcManager = new WebRTCManager({
+        connectTransport: this.socketManager.handleCompleteConnectTransport.bind(
+          this.socketManager,
+        ),
+        produce: this.socketManager.handleProduce.bind(this.socketManager),
+      });
       this.$router.push('/');
     } catch (error) {
       console.error('Error during login:', error);
