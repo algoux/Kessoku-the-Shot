@@ -71,6 +71,7 @@ export default class HomeView extends Vue {
   async changeReadyState() {
     this.isReady = !this.isReady;
     if (this.isReady) {
+      this.show = false;
       let videoTrack = this.stream.getVideoTracks()[0].clone();
       let defaultTrack = {
         trackId: 'camera_main',
@@ -92,6 +93,10 @@ export default class HomeView extends Vue {
         closeProducers,
         (trackId: string) => this.webrtcManager.startBroadcaster(trackId, this.stream),
       );
+
+      // Pre-produce the camera track so director-side consume requests cannot
+      // race ahead of server-side producer registration.
+      await this.webrtcManager.startBroadcaster(defaultTrack.trackId, this.stream);
     } else {
       await this.socketManager.handleCancelReady();
     }
@@ -102,18 +107,21 @@ export default class HomeView extends Vue {
    */
   @Provide()
   async handleResolutionChange(width: number, height: number) {
+    if (this.isReady) return;
     await this.mediaDeviceManager.setResolution(width, height);
     this.settings = this.mediaDeviceManager.getCurrentSettings();
   }
 
   @Provide()
   async handleFrameRateChange(frameRate: number) {
+    if (this.isReady) return;
     await this.mediaDeviceManager.setFrameRate(frameRate);
     this.settings = this.mediaDeviceManager.getCurrentSettings();
   }
 
   @Provide()
   async switchCamera(deviceId: string) {
+    if (this.isReady) return;
     await this.mediaDeviceManager.switchCamera(deviceId);
     this.currentDevice = this.mediaDeviceManager.getCurrentDevice();
     this.capabilities = this.mediaDeviceManager.getCapabilities();
@@ -123,6 +131,7 @@ export default class HomeView extends Vue {
 
   @Provide()
   async onResolutionChange(height: number) {
+    if (this.isReady) return;
     try {
       const width = Math.round(this.settings.aspectRatio * height);
       await this.mediaDeviceManager.setResolution(width, height);
@@ -138,6 +147,7 @@ export default class HomeView extends Vue {
 
   @Provide()
   async onFrameRateChange(frameRate: number) {
+    if (this.isReady) return;
     try {
       await this.mediaDeviceManager.setFrameRate(frameRate);
       this.settings = this.mediaDeviceManager.getCurrentSettings();
@@ -219,10 +229,12 @@ export default class HomeView extends Vue {
 
   @Provide()
   openDeviceSettings() {
+    if (this.isReady) return;
     this.show = true;
   }
 
   showPopup() {
+    if (this.isReady) return;
     this.show = true;
   }
 
@@ -254,7 +266,7 @@ export default class HomeView extends Vue {
             <Home :stroke-width="2" />
           </template>
         </TabbarItem>
-        <TabbarItem label="Settings" @click="showPopup">
+        <TabbarItem label="Settings" :disabled="isReady" @click="showPopup">
           <template #icon="props">
             <Settings :stroke-width="2" />
           </template>

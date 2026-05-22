@@ -73,7 +73,7 @@ export default class GlobalSettings extends Vue {
     }));
   }
 
-  private parseBitrate(bitrate: number) {
+  parseBitrate(bitrate: number) {
     return Math.round(bitrate / 1e6);
   }
 

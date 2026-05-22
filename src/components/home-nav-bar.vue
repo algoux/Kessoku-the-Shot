@@ -40,13 +40,16 @@ export default class HomeNavBar extends Vue {
   @Inject()
   changeReadyState!: () => Promise<void>;
 
-  menuActions = [
-    { text: '设备设置', value: 'settings', icon: 'setting-o' },
-    { text: '退出登录', value: 'logout', icon: 'user' },
-  ];
+  get menuActions() {
+    return [
+      { text: '设备设置', value: 'settings', icon: 'setting-o', disabled: this.isReady },
+      { text: '退出登录', value: 'logout', icon: 'user' },
+    ];
+  }
 
   onMenuSelect(action: any) {
     this.showMenu = false;
+    if (action.disabled) return;
     if (action.value === 'settings') {
       this.openDeviceSettings();
     } else if (action.value === 'logout') {

@@ -7,7 +7,7 @@ import {
   OnProduceReqDTO,
   OnProduceResDTO,
   OnStopBroadcastReqDTO,
-  RequestStartBroadcastDTO
+  RequestStartBroadcastDTO,
 } from '@/typings/data';
 import { DtlsParameters } from 'mediasoup-client/types';
 
@@ -15,11 +15,16 @@ export default class SocketManager {
   private static instance: SocketManager | null = null;
   private socket: Socket;
   private onConnectErrorCallback?: (error: Error) => void;
-  private cleanUpMediatransport: Function;
-  private closeProducers: Function;
-  private startBroadcaster: (trackId: string) => Promise<void>;
+  private cleanUpMediatransport: Function = () => {};
+  private closeProducers: Function = () => {};
+  private startBroadcaster: (trackId: string) => Promise<void> = async () => {};
 
-  private constructor(alias: string, shotToken: string, clientId: string, onConnectError?: (error: Error) => void) {
+  private constructor(
+    alias: string,
+    shotToken: string,
+    clientId: string,
+    onConnectError?: (error: Error) => void,
+  ) {
     this.onConnectErrorCallback = onConnectError;
     console.log(alias, shotToken);
     this.socket = io('https://rl-broadcast-hub.algoux.cn/shot', {
@@ -51,15 +56,27 @@ export default class SocketManager {
       this.cleanUpMediatransport();
     });
 
-    this.socket.on('requestStartBroadcast', (data: RequestStartBroadcastDTO) => {
-      this.handleRequestStartBroadcast(data.trackIds);
-    })
+    this.socket.on(
+      'requestStartBroadcast',
+      async (data: RequestStartBroadcastDTO, callback?: Function) => {
+        try {
+          await this.handleRequestStartBroadcast(data.trackIds);
+          callback?.();
+        } catch (error) {
+          console.error('resolve requestStartBroadcast failed:', error);
+          callback?.({
+            success: false,
+            msg: error instanceof Error ? error.message : 'Failed to start broadcast',
+          });
+        }
+      },
+    );
 
     this.socket.on('requestStopBroadcast', (data, callback) => {
-      console.log('resolve requestStopBroadcast')
+      console.log('resolve requestStopBroadcast');
       this.closeProducers();
-      callback(); // 发送空 callback 
-    })
+      callback(); // 发送空 callback
+    });
   }
 
   public static getInstance(
@@ -97,7 +114,11 @@ export default class SocketManager {
     return res.data;
   }
 
-  setupEventsListenerFunctions(cleanUpMediatransport: Function, closeProducers: Function, startBroadcaster: (trackId: string) => Promise<void>) {
+  setupEventsListenerFunctions(
+    cleanUpMediatransport: Function,
+    closeProducers: Function,
+    startBroadcaster: (trackId: string) => Promise<void>,
+  ) {
     this.cleanUpMediatransport = cleanUpMediatransport;
     this.closeProducers = closeProducers;
     this.startBroadcaster = startBroadcaster;
@@ -115,7 +136,10 @@ export default class SocketManager {
 
   public async handleRequestStartBroadcast(trackIds: string[]) {
     // 先默认只推送 camera_main
-    const trackId = trackIds.find(id => id === 'camera_main');
+    const trackId = trackIds.find((id) => id === 'camera_main');
+    if (!trackId) {
+      throw new Error(`No supported track found in request: ${trackIds.join(', ')}`);
+    }
     await this.startBroadcaster(trackId);
   }
 

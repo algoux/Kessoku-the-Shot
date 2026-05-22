@@ -24,7 +24,11 @@ export default class MediaDeviceManager {
 
   /** 初始化并选择默认摄像头 */
   async init() {
-    await navigator.mediaDevices.getUserMedia({ video: this.constraints, audio: true });
+    const permissionStream = await navigator.mediaDevices.getUserMedia({
+      video: this.constraints,
+    });
+    permissionStream.getTracks().forEach((track) => track.stop());
+
     await this.updateCameraList();
 
     if (this.devices.length === 0) {

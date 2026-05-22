@@ -44,7 +44,7 @@ export default class VideoContainer extends Vue {
   }
 
   // 将码率转换为 Mbps 单位
-  private parseBitrate(bitrate: number) {
+  parseBitrate(bitrate: number) {
     return Math.round(bitrate / 1e6);
   }
 
@@ -61,7 +61,7 @@ export default class VideoContainer extends Vue {
       <div class="camera-icon" v-if="!loadCameraSuccess">
         <Camera size="48" />
       </div>
-      <div class="device-info" :class="screenOrientation.isLandscape ? 'device-info-landscape' : ''" v-if="settings">
+      <div class="device-info device-info-osd" v-if="settings && screenOrientation.isLandscape">
         <div class="info-item">
           <span class="info-label">分辨率:</span>
           <span class="info-value">{{ settings.width }}x{{ settings.height }}</span>
@@ -72,8 +72,22 @@ export default class VideoContainer extends Vue {
         </div>
         <div class="info-item">
           <span class="info-label">码率:</span>
-          <span>{{ this.parseBitrate(this.simulCastConfigs[0].bitrate) }} Mbps</span>
+          <span>{{ parseBitrate(simulCastConfigs[0].bitrate) }} Mbps</span>
         </div>
+      </div>
+    </div>
+    <div class="device-info-list" v-if="settings && screenOrientation.isPortrait">
+      <div class="info-row">
+        <span class="info-label">分辨率</span>
+        <span class="info-value">{{ settings.width }}x{{ settings.height }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">帧率</span>
+        <span class="info-value">{{ settings.frameRate.toFixed(1) }} FPS</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">码率</span>
+        <span class="info-value">{{ parseBitrate(simulCastConfigs[0].bitrate) }} Mbps</span>
       </div>
     </div>
   </div>
@@ -101,8 +115,9 @@ export default class VideoContainer extends Vue {
 }
 
 .video-wrapper-portrait {
-  height: 100%;
-  position: relative;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
 }
 
 .video-container {
@@ -144,19 +159,47 @@ export default class VideoContainer extends Vue {
   }
 }
 
-.device-info-landscape {
+.device-info-osd {
   bottom: 1rem;
 }
 
 .portrait {
-  // aspect-ratio: 16 / 9;
-  height: 100%;
-  // padding: 0.5rem;
+  aspect-ratio: 16 / 9;
+  max-width: 100%;
+  max-height: 45vh;
+  overflow: hidden;
+  border-radius: 0.5rem;
 }
 
 .landscape {
   height: 100vh;
   position: absolute;
   top: 0;
+}
+
+.device-info-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--van-text-color);
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    background: var(--van-background-2);
+    font-size: 0.875rem;
+  }
+
+  .info-label {
+    color: var(--van-text-color-2);
+  }
+
+  .info-value {
+    font-weight: 500;
+  }
 }
 </style>
