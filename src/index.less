@@ -12,6 +12,14 @@
   --title-font-size: 1.5rem;
   --text-font-size: 1rem;
   --desc-font-size: 0.875rem;
+  --app-safe-area-top-fallback: 0px;
+  --app-safe-area-right-fallback: 0px;
+  --app-safe-area-bottom-fallback: 0px;
+  --app-safe-area-left-fallback: 0px;
+  --app-safe-area-top: max(env(safe-area-inset-top, 0px), var(--app-safe-area-top-fallback));
+  --app-safe-area-right: max(env(safe-area-inset-right, 0px), var(--app-safe-area-right-fallback));
+  --app-safe-area-bottom: max(env(safe-area-inset-bottom, 0px), var(--app-safe-area-bottom-fallback));
+  --app-safe-area-left: max(env(safe-area-inset-left, 0px), var(--app-safe-area-left-fallback));
 }
 
 html,
@@ -25,6 +33,11 @@ body {
   width: 100vw;
   overflow: hidden;
 }
+
+.van-popup--bottom {
+  padding-bottom: var(--app-safe-area-bottom);
+}
+
 .van-nav-bar {
   background: transparent !important;
   &::after {

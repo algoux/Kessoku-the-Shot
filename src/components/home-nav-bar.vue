@@ -64,7 +64,7 @@ export default class HomeNavBar extends Vue {
 </script>
 
 <template>
-  <NavBar class="home-header" :safe-area-inset-top="true">
+  <NavBar class="home-header">
     <template #title>
       <div class="home-header-content">
         <Popover
@@ -130,6 +130,8 @@ export default class HomeNavBar extends Vue {
 }
 
 .home-header {
+  padding-top: var(--app-safe-area-top);
+
   :deep(.van-nav-bar__title) {
     width: 100%;
     max-width: 100%;

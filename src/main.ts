@@ -5,20 +5,32 @@ import '@vant/touch-emulator';
 import { createApp } from 'vue';
 import App from './App.vue';
 import { router } from './routes';
-import { StatusBar, Style } from '@capacitor/status-bar';
+import { StatusBar } from '@capacitor/status-bar';
 import { Capacitor } from '@capacitor/core';
 import { Camera } from '@capacitor/camera';
 
+const root = document.documentElement;
+const setSafeAreaFallback = (name: string, value: string) => {
+  root.style.setProperty(`--app-safe-area-${name}-fallback`, value);
+};
+
 if (Capacitor.isNativePlatform()) {
   const platform = Capacitor.getPlatform();
+  root.classList.add('app-native', `app-${platform}`);
+
   await Camera.requestPermissions({
     permissions: ['camera'],
   });
+
   if (platform === 'android') {
-    // Android：关闭覆盖，留出状态栏安全区
     await StatusBar.setOverlaysWebView({ overlay: false });
+    const statusBarInfo = await StatusBar.getInfo().catch(() => undefined);
+    const statusBarOverlaysWebView = statusBarInfo?.overlays === true;
+
+    root.classList.toggle('app-statusbar-overlay', statusBarOverlaysWebView);
+    setSafeAreaFallback('top', statusBarOverlaysWebView ? '24px' : '0px');
+    setSafeAreaFallback('bottom', '16px');
   } else {
-    // iOS：使用安全区，由 safe-area 生效
     await StatusBar.setOverlaysWebView({ overlay: true });
   }
 }

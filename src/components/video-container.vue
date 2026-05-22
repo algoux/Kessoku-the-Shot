@@ -172,9 +172,13 @@ export default class VideoContainer extends Vue {
 }
 
 .landscape {
-  height: 100vh;
-  position: absolute;
-  top: 0;
+  position: fixed;
+  top: var(--app-safe-area-top);
+  right: var(--app-safe-area-right);
+  bottom: var(--app-safe-area-bottom);
+  left: var(--app-safe-area-left);
+  width: auto;
+  height: auto;
 }
 
 .device-info-list {

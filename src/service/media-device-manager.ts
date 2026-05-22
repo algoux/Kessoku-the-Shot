@@ -3,6 +3,9 @@ import { toRaw } from 'vue';
 
 export default class MediaDeviceManager {
   protected MAX_FRAME_RATE: number = 60;
+  protected DEFAULT_WIDTH: number = 1280;
+  protected DEFAULT_HEIGHT: number = 720;
+  protected DEFAULT_FRAME_RATE: number = 30;
   protected PRESET_HEIGHT_LIST: number[] = [2160, 1800, 1440, 1200, 1080, 900, 768, 720];
   private devices: MediaDeviceInfo[] = [];
   private currentDeviceId: string | null = null;
@@ -11,8 +14,10 @@ export default class MediaDeviceManager {
   private capabilities: MediaTrackCapabilities | null = null;
   private settings: MediaTrackSettings | null = null;
   private constraints: MediaTrackConstraints = {
-    height: { min: 720, ideal: this.PRESET_HEIGHT_LIST[0] },
-    frameRate: { ideal: this.MAX_FRAME_RATE },
+    width: { ideal: this.DEFAULT_WIDTH },
+    height: { min: 720, ideal: this.DEFAULT_HEIGHT },
+    aspectRatio: { ideal: 16 / 9 },
+    frameRate: { ideal: this.DEFAULT_FRAME_RATE },
   };
   // deviceId -> simulcast configs
   private cameraSimulcastConfigs: Map<string, SimulcastConfig[]> = new Map();

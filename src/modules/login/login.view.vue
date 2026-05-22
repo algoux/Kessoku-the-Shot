@@ -148,6 +148,7 @@ export default class LoginView extends Vue {
   align-content: center;
 }
 .login-container {
+  min-height: 100svh;
   height: 100dvh;
   width: 100vw;
   display: flex;
@@ -156,6 +157,8 @@ export default class LoginView extends Vue {
   align-items: center;
   overflow: hidden;
   position: relative;
+  padding: var(--app-safe-area-top) var(--app-safe-area-right) var(--app-safe-area-bottom)
+    var(--app-safe-area-left);
 
   & .login-title {
     font-size: var(--title-font-size);
@@ -172,14 +175,14 @@ export default class LoginView extends Vue {
 .shu {
   gap: 1.5rem;
   & .copyright {
-    bottom: 1rem;
+    bottom: calc(var(--app-safe-area-bottom) + 1rem);
   }
 }
 
 .heng {
   gap: 1rem;
   & .copyright {
-    bottom: 0.5rem;
+    bottom: calc(var(--app-safe-area-bottom) + 0.5rem);
   }
 }
 

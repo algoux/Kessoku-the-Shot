@@ -72,7 +72,7 @@ export default class HomeView extends Vue {
     this.isReady = !this.isReady;
     if (this.isReady) {
       this.show = false;
-      let videoTrack = this.stream.getVideoTracks()[0].clone();
+      let videoTrack = this.stream.getVideoTracks()[0];
       let defaultTrack = {
         trackId: 'camera_main',
         name: videoTrack.label,
@@ -249,7 +249,13 @@ export default class HomeView extends Vue {
   <Overlay :show="showOverlay" style="display: flex; justify-content: center; align-items: center">
     <Loading type="spinner" size="24"> 加载设备... </Loading>
   </Overlay>
-  <div class="home-view">
+  <div
+    class="home-view"
+    :class="{
+      'home-view-portrait': screenOrientation.isPortrait,
+      'home-view-landscape': screenOrientation.isLandscape,
+    }"
+  >
     <Popup v-model:show="show" position="bottom">
       <template #default>
         <GlobalSettings @close="show = false" />
@@ -260,7 +266,12 @@ export default class HomeView extends Vue {
       <VideoContainer ref="videoContainer" />
     </div>
     <!-- <footer class="home-footer" v-if="screenOrientation.isPortrait"> -->
-      <Tabbar unactive-color="#7d7e80" active-color="#1989fa" safe-area-inset-bottom v-if="screenOrientation.isPortrait">
+      <Tabbar
+        class="home-tabbar"
+        unactive-color="#7d7e80"
+        active-color="#1989fa"
+        v-if="screenOrientation.isPortrait"
+      >
         <TabbarItem label="Home">
           <template #icon="props">
             <Home :stroke-width="2" />
@@ -279,17 +290,38 @@ export default class HomeView extends Vue {
 <style lang="less" scoped>
 .home-view {
   width: 100%;
+  min-height: 100svh;
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding-top: 2rem;
+  padding-right: var(--app-safe-area-right);
+  padding-left: var(--app-safe-area-left);
 
   .home-content {
     flex: 1;
+    min-height: 0;
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
   }
+}
+
+.home-view-portrait {
+  .home-content {
+    padding-bottom: calc(var(--van-tabbar-height) + var(--app-safe-area-bottom) + 1rem);
+  }
+}
+
+.home-view-landscape {
+  padding-bottom: var(--app-safe-area-bottom);
+}
+
+:deep(.home-tabbar.van-tabbar) {
+  right: var(--app-safe-area-right);
+  left: var(--app-safe-area-left);
+  width: auto;
+  height: calc(var(--van-tabbar-height) + var(--app-safe-area-bottom));
+  padding-bottom: var(--app-safe-area-bottom);
 }
 </style>
