@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
-import { ScreenOrientationState, SimulcastConfig } from '@/typings/data';
+import { ScreenOrientationState } from '@/typings/data';
 import { Inject, Watch } from 'vue-property-decorator';
 
 import { Camera } from 'lucide-vue-next';
@@ -24,8 +24,6 @@ export default class VideoContainer extends Vue {
   @Inject()
   loadCameraSuccess!: boolean;
   @Inject()
-  simulCastConfigs!: SimulcastConfig[];
-  @Inject()
   onCameraSwitchError!: () => void;
 
   @Watch('stream')
@@ -41,11 +39,6 @@ export default class VideoContainer extends Vue {
     const video = this.videoRef!;
     video.srcObject = stream;
     await video.play();
-  }
-
-  // 将码率转换为 Mbps 单位
-  parseBitrate(bitrate: number) {
-    return Math.round(bitrate / 1e6);
   }
 
   async mounted() {
@@ -72,7 +65,7 @@ export default class VideoContainer extends Vue {
         </div>
         <div class="info-item">
           <span class="info-label">码率:</span>
-          <span>{{ parseBitrate(simulCastConfigs[0].bitrate) }} Mbps</span>
+          <span>自动</span>
         </div>
       </div>
     </div>
@@ -87,7 +80,7 @@ export default class VideoContainer extends Vue {
       </div>
       <div class="info-row">
         <span class="info-label">码率</span>
-        <span class="info-value">{{ parseBitrate(simulCastConfigs[0].bitrate) }} Mbps</span>
+        <span class="info-value">自动</span>
       </div>
     </div>
   </div>
