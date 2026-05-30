@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
 import { Inject } from 'vue-property-decorator';
-import { Resolution, SimulcastConfig, ScreenOrientationState } from '@/typings/data';
+import { Resolution, ScreenOrientationState } from '@/typings/data';
 
 import { Form, CellGroup, Field, Button, DropdownItem, DropdownMenu, Icon } from 'vant';
 import { X } from 'lucide-vue-next';
@@ -41,8 +41,6 @@ export default class GlobalSettings extends Vue {
   @Inject()
   onFrameRateChange!: (frameRate: number) => Promise<void>;
   @Inject()
-  simulCastConfigs!: SimulcastConfig[];
-  @Inject()
   loadCameraSuccess!: boolean;
   maxFrameRate: number = 60;
 
@@ -71,10 +69,6 @@ export default class GlobalSettings extends Vue {
       text: `${rate} fps`,
       value: rate,
     }));
-  }
-
-  parseBitrate(bitrate: number) {
-    return Math.round(bitrate / 1e6);
   }
 
   mounted(): void {
@@ -124,9 +118,7 @@ export default class GlobalSettings extends Vue {
           </DropdownMenu>
         </CellGroup>
         <div class="bitrate-info" v-if="availableCameras.length">
-          <span class="bitrate-label"
-            >推流码率: {{ parseBitrate(simulCastConfigs[0].bitrate) }} Mbps</span
-          >
+          <span class="bitrate-label">推流码率: 自动</span>
         </div>
         <div v-else class="bitrate-info">摄像头检测失败</div>
       </Form>

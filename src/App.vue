@@ -86,6 +86,7 @@ export default class App extends Vue {
   @Provide()
   async login(alias: string, shotName: string, token: string) {
     try {
+      SocketManager.reset();
       let clientId = `s-${uuidv4().substring(0, 18)}`;
       this.socketManager = SocketManager.getInstance(
         alias,

@@ -1,6 +1,5 @@
 import * as mediasoupClient from 'mediasoup-client';
 import {
-  ProducerOptions,
   Device,
   Transport,
   Producer,
@@ -69,7 +68,7 @@ export default class WebRTCManager {
     );
   }
 
-  async startBroadcaster(trackId: string, stream: MediaStream, options?: ProducerOptions) {
+  async startBroadcaster(trackId: string, stream: MediaStream) {
     const existingProducer = this.trackIdtoProducer.get(trackId) || [];
     const hasActiveProducer =
       this.sendTransportConnectionState !== 'failed' &&
@@ -91,7 +90,6 @@ export default class WebRTCManager {
       track: videoTrack,
       stopTracks: false,
       appData: { trackId },
-      ...options,
     });
     this.producers.set(producer.id, producer);
     const trackIdtoProducers = this.trackIdtoProducer.get(trackId) || [];

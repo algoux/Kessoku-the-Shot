@@ -49,6 +49,7 @@ export default class HomeNavBar extends Vue {
 
   onMenuSelect(action: any) {
     this.showMenu = false;
+    if (this.isReady) return;
     if (action.disabled) return;
     if (action.value === 'settings') {
       this.openDeviceSettings();
@@ -59,6 +60,9 @@ export default class HomeNavBar extends Vue {
 
   async onReadyClick() {
     await this.changeReadyState();
+    if (this.isReady) {
+      this.showMenu = false;
+    }
   }
 }
 </script>
@@ -71,11 +75,15 @@ export default class HomeNavBar extends Vue {
           v-if="!screenOrientation.isPortrait"
           v-model:show="showMenu"
           :actions="menuActions"
+          :disabled="isReady"
           placement="bottom-start"
           @select="onMenuSelect"
         >
           <template #reference>
-            <div class="userinfo userinfo-dropdown" :class="isReady ? 'ready-state' : ''">
+            <div
+              class="userinfo userinfo-dropdown"
+              :class="{ 'ready-state': isReady, 'dropdown-disabled': isReady }"
+            >
               <Image
                 :src="logo"
                 alt="Logo"
@@ -177,6 +185,11 @@ export default class HomeNavBar extends Vue {
         .icon-rotate {
           transition: transform 0.3s;
           transform: rotate(180deg);
+        }
+
+        &.dropdown-disabled {
+          cursor: not-allowed;
+          pointer-events: none;
         }
       }
     }

@@ -1,5 +1,4 @@
-import { Resolution, SimulcastConfig } from '@/typings/data';
-import { toRaw } from 'vue';
+import { Resolution } from '@/typings/data';
 
 export default class MediaDeviceManager {
   protected MAX_FRAME_RATE: number = 60;
@@ -19,8 +18,6 @@ export default class MediaDeviceManager {
     aspectRatio: { ideal: 16 / 9 },
     frameRate: { ideal: this.DEFAULT_FRAME_RATE },
   };
-  // deviceId -> simulcast configs
-  private cameraSimulcastConfigs: Map<string, SimulcastConfig[]> = new Map();
   private resolutionList: Resolution[] = null;
 
   constructor() {
@@ -92,7 +89,6 @@ export default class MediaDeviceManager {
     this.capabilities = this.videoTrack.getCapabilities();
     this.settings = this.videoTrack.getSettings();
     this.genResolutionList(this.settings);
-    this.updateSimulcastConfig();
     return this.stream;
   }
 
@@ -174,7 +170,6 @@ export default class MediaDeviceManager {
     console.log('Applying new resolution constraints:', newConstraints);
     await this.videoTrack.applyConstraints(newConstraints);
     this.settings = this.videoTrack.getSettings();
-    this.updateSimulcastConfig();
   }
 
   async setFrameRate(frameRate: number) {
@@ -183,47 +178,5 @@ export default class MediaDeviceManager {
     });
 
     this.settings = this.videoTrack.getSettings();
-    this.updateSimulcastConfig();
-  }
-
-  private calculateBitrate(width: number, height: number, frameRate: number): number {
-    return Math.round(width * height * frameRate * 0.000078125);
-  }
-
-  private buildSimulcastConfigs(
-    width: number,
-    height: number,
-    frameRate: number,
-  ): SimulcastConfig[] {
-    const base = this.calculateBitrate(width, height, frameRate);
-
-    return [
-      {
-        rid: 'origin',
-        scaleResolutionDownBy: 1,
-        bitrate: base,
-      },
-      {
-        rid: 'low',
-        scaleResolutionDownBy: 4,
-        bitrate: Math.round(base / 4),
-      },
-    ];
-  }
-
-  private updateSimulcastConfig() {
-    if (!this.settings || !this.currentDeviceId) return;
-
-    const { width, height, frameRate } = this.settings;
-
-    if (!width || !height || !frameRate) return;
-
-    const configs = this.buildSimulcastConfigs(width, height, frameRate);
-    this.cameraSimulcastConfigs.set(this.currentDeviceId, configs);
-  }
-
-  getSimulcastConfigs(): SimulcastConfig[] {
-    if (!this.currentDeviceId) return [];
-    return this.cameraSimulcastConfigs.get(this.currentDeviceId) || [];
   }
 }

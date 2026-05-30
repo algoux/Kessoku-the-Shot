@@ -5,7 +5,6 @@ import { Inject, Provide } from 'vue-property-decorator';
 import {
   ScreenOrientationState,
   Resolution,
-  SimulcastConfig,
   HomePageIndexEnum,
   HomeState,
 } from '@/typings/data';
@@ -160,43 +159,6 @@ export default class HomeView extends Vue {
     }
   }
 
-  @Provide({ reactive: true })
-  get simulCastConfigs(): SimulcastConfig[] {
-    return [
-      {
-        rid: 'origin',
-        scaleResolutionDownBy: 1.0,
-        bitrate: this.calulateBitrate(
-          this.settings.width,
-          this.settings.height,
-          this.settings.frameRate,
-          1.0,
-        ),
-      },
-      {
-        rid: 'low',
-        scaleResolutionDownBy: 4.0,
-        bitrate: this.calulateBitrate(
-          this.settings.width,
-          this.settings.height,
-          this.settings.frameRate,
-          4.0,
-        ),
-      },
-    ];
-  }
-
-  private calulateBitrate(
-    width: number,
-    height: number,
-    frameRate: number,
-    scaleResolutionDownBy: number,
-  ): number {
-    const scaledWidth = width / scaleResolutionDownBy;
-    const scaledHeight = height / scaleResolutionDownBy;
-    return scaledWidth * scaledHeight * frameRate * 0.000078125 * 1000;
-  }
-
   async mounted() {
     try {
       this.showOverlay = true;
@@ -223,6 +185,7 @@ export default class HomeView extends Vue {
 
   @Provide()
   async logout() {
+    SocketManager.reset();
     await Preferences.remove({ key: 'loginState' });
     this.$router.push('/login');
   }
