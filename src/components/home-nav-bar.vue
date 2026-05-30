@@ -68,7 +68,10 @@ export default class HomeNavBar extends Vue {
 </script>
 
 <template>
-  <NavBar class="home-header">
+  <NavBar
+    class="home-header"
+    :class="{ 'home-header-landscape': screenOrientation.isLandscape }"
+  >
     <template #title>
       <div class="home-header-content">
         <Popover
@@ -139,6 +142,12 @@ export default class HomeNavBar extends Vue {
 
 .home-header {
   padding-top: var(--app-safe-area-top);
+  height: auto;
+
+  :deep(.van-nav-bar__content) {
+    height: auto;
+    min-height: var(--van-nav-bar-height);
+  }
 
   :deep(.van-nav-bar__title) {
     width: 100%;
@@ -193,6 +202,24 @@ export default class HomeNavBar extends Vue {
         }
       }
     }
+  }
+}
+
+.home-header-landscape {
+  padding-top: calc(var(--app-safe-area-top) + 0.75rem);
+
+  & .home-header-content {
+    padding-top: 0;
+    padding-bottom: 0.75rem;
+  }
+
+  :deep(.van-button) {
+    height: 42px;
+    padding: 0 18px;
+  }
+
+  :deep(.van-image) {
+    flex: 0 0 auto;
   }
 }
 </style>

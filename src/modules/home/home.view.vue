@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Vue, Options } from 'vue-class-component';
 import { Preferences } from '@capacitor/preferences';
-import { Inject, Provide } from 'vue-property-decorator';
+import { Inject, Provide, Watch } from 'vue-property-decorator';
 import {
   ScreenOrientationState,
   Resolution,
@@ -38,6 +38,7 @@ import HomeNavBar from '@/components/home-nav-bar.vue';
 export default class HomeView extends Vue {
   show: boolean = false;
   showOverlay: boolean = false;
+  private orientationRefreshTimer: ReturnType<typeof setTimeout> | null = null;
   @Inject()
   screenOrientation!: ScreenOrientationState;
   @Provide({ reactive: true })
@@ -65,6 +66,19 @@ export default class HomeView extends Vue {
   availableCameras: MediaDeviceInfo[] = [];
   @Provide({ reactive: true })
   resolutionList: Resolution[] = [];
+
+  @Watch('screenOrientation.isPortrait')
+  onScreenOrientationChange() {
+    if (!this.loadCameraSuccess || !this.stream) return;
+
+    if (this.orientationRefreshTimer) {
+      clearTimeout(this.orientationRefreshTimer);
+    }
+
+    this.orientationRefreshTimer = setTimeout(() => {
+      void this.refreshCameraSettingsAfterOrientationChange();
+    }, 300);
+  }
 
   @Provide()
   async changeReadyState() {
@@ -181,6 +195,21 @@ export default class HomeView extends Vue {
     this.capabilities = this.mediaDeviceManager.getCapabilities();
     this.settings = this.mediaDeviceManager.getCurrentSettings();
     this.resolutionList = this.mediaDeviceManager.getResolutionList();
+  }
+
+  private async refreshCameraSettingsAfterOrientationChange() {
+    try {
+      await this.mediaDeviceManager.refreshSettings();
+      this.capabilities = this.mediaDeviceManager.getCapabilities();
+      this.settings = this.mediaDeviceManager.getCurrentSettings();
+      this.resolutionList = this.mediaDeviceManager.getResolutionList();
+    } catch (error) {
+      console.error('Error refreshing camera settings after orientation change:', error);
+      showNotify({
+        type: 'danger',
+        message: '摄像头设置刷新失败',
+      });
+    }
   }
 
   @Provide()

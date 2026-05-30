@@ -12,6 +12,8 @@ export default class MediaDeviceManager {
   private videoTrack: MediaStreamTrack | null = null;
   private capabilities: MediaTrackCapabilities | null = null;
   private settings: MediaTrackSettings | null = null;
+  private desiredResolution: Resolution | null = null;
+  private desiredFrameRate: number | null = null;
   private constraints: MediaTrackConstraints = {
     width: { ideal: this.DEFAULT_WIDTH },
     height: { min: 720, ideal: this.DEFAULT_HEIGHT },
@@ -41,9 +43,17 @@ export default class MediaDeviceManager {
   }
 
   genResolutionList(settings: MediaTrackSettings) {
-    const aspectRatio = settings.aspectRatio;
+    const width = settings.width;
+    const currentHeight = settings.height;
+
+    if (!width || !currentHeight) {
+      this.resolutionList = [];
+      return;
+    }
+
+    const aspectRatio = settings.aspectRatio || width / currentHeight;
     let resolutionList = this.PRESET_HEIGHT_LIST.map((height) => {
-      if (height <= this.settings.height) {
+      if (height <= currentHeight) {
         return {
           width: Math.round(height * aspectRatio),
           height: height,
@@ -51,10 +61,9 @@ export default class MediaDeviceManager {
       }
     }).filter(Boolean) as Resolution[];
     if (
-      resolutionList[0].height !== this.settings.height &&
-      resolutionList[0].width !== this.settings.width
+      !resolutionList.some((res) => res.width === width && res.height === currentHeight)
     ) {
-      resolutionList.unshift({ width: settings.width, height: settings.height });
+      resolutionList.unshift({ width, height: currentHeight });
     }
     this.resolutionList = resolutionList;
   }
@@ -81,14 +90,13 @@ export default class MediaDeviceManager {
     this.stream = await navigator.mediaDevices.getUserMedia({
       video: {
         deviceId: { exact: this.currentDeviceId },
-        ...this.constraints,
+        ...this.getVideoConstraints(),
       },
     });
 
     this.videoTrack = this.stream.getVideoTracks()[0];
-    this.capabilities = this.videoTrack.getCapabilities();
-    this.settings = this.videoTrack.getSettings();
-    this.genResolutionList(this.settings);
+    this.updateTrackState();
+    this.rememberCurrentResolution();
     return this.stream;
   }
 
@@ -103,7 +111,7 @@ export default class MediaDeviceManager {
       const newStream = await navigator.mediaDevices.getUserMedia({
         video: {
           deviceId: { exact: deviceId },
-          ...this.constraints,
+          ...this.getVideoConstraints(),
         },
       });
 
@@ -114,6 +122,7 @@ export default class MediaDeviceManager {
 
       this.stream?.addTrack(newTrack);
       this.videoTrack = newTrack;
+      this.updateTrackState();
     }
   }
 
@@ -122,7 +131,8 @@ export default class MediaDeviceManager {
     this.constraints = { ...this.constraints, ...settings };
 
     if (this.videoTrack) {
-      await this.videoTrack.applyConstraints(this.constraints);
+      await this.videoTrack.applyConstraints(this.getVideoConstraints());
+      this.updateTrackState();
     }
   }
 
@@ -162,21 +172,57 @@ export default class MediaDeviceManager {
     return this.settings;
   }
 
-  async setResolution(width: number, height: number) {
-    const newConstraints: MediaTrackConstraints = {
-      width: { exact: width },
-      height: { exact: height },
+  private getVideoConstraints(): MediaTrackConstraints {
+    return {
+      ...this.constraints,
+      ...(this.desiredResolution
+        ? {
+            width: { exact: this.desiredResolution.width },
+            height: { exact: this.desiredResolution.height },
+          }
+        : {}),
+      ...(this.desiredFrameRate ? { frameRate: { exact: this.desiredFrameRate } } : {}),
     };
-    console.log('Applying new resolution constraints:', newConstraints);
-    await this.videoTrack.applyConstraints(newConstraints);
+  }
+
+  private updateTrackState() {
+    if (!this.videoTrack) return;
+
+    this.capabilities = this.videoTrack.getCapabilities();
     this.settings = this.videoTrack.getSettings();
+
+    if (this.settings.width && this.settings.height) {
+      this.genResolutionList(this.settings);
+    }
+  }
+
+  private rememberCurrentResolution() {
+    if (!this.settings?.width || !this.settings?.height) return;
+
+    this.desiredResolution = {
+      width: this.settings.width,
+      height: this.settings.height,
+    };
+  }
+
+  async refreshSettings() {
+    if (!this.videoTrack) return;
+
+    console.log('Reapplying camera constraints after orientation change:', this.getVideoConstraints());
+    await this.videoTrack.applyConstraints(this.getVideoConstraints());
+    this.updateTrackState();
+  }
+
+  async setResolution(width: number, height: number) {
+    this.desiredResolution = { width, height };
+    console.log('Applying new resolution constraints:', this.getVideoConstraints());
+    await this.videoTrack.applyConstraints(this.getVideoConstraints());
+    this.updateTrackState();
   }
 
   async setFrameRate(frameRate: number) {
-    await this.videoTrack.applyConstraints({
-      frameRate: { exact: frameRate },
-    });
-
-    this.settings = this.videoTrack.getSettings();
+    this.desiredFrameRate = frameRate;
+    await this.videoTrack.applyConstraints(this.getVideoConstraints());
+    this.updateTrackState();
   }
 }
